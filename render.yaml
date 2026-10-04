@@ -1,34 +1,34 @@
 services:
   # The FastAPI Backend
   - type: web
-    name: bhudrishti-backend
+    name: jaldrishti-backend
     env: python
     buildCommand: "cd backend && pip install -r requirements.txt"
     startCommand: "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: POSTGRES_USER
         fromDatabase:
-          name: bhudrishti-db
+          name: jaldrishti-db
           property: user
       - key: POSTGRES_PASSWORD
         fromDatabase:
-          name: bhudrishti-db
+          name: jaldrishti-db
           property: password
       - key: POSTGRES_HOST
         fromDatabase:
-          name: bhudrishti-db
+          name: jaldrishti-db
           property: host
       - key: POSTGRES_PORT
         fromDatabase:
-          name: bhudrishti-db
+          name: jaldrishti-db
           property: port
       - key: POSTGRES_DB
         fromDatabase:
-          name: bhudrishti-db
+          name: jaldrishti-db
           property: database
 
   # The PostGIS Database
   - type: psql
-    name: bhudrishti-db
+    name: jaldrishti-db
     plan: free
     postgresMajorVersion: 15

@@ -276,7 +276,7 @@ async def chat_endpoint(request: ChatRequest):
         if api_key and api_key != "mock":
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-1.5-flash')
-            prompt = f"You are BhūDrishti AI. The database currently has {img_count} field images uploaded by citizens. The user asks: {request.query}. Give a short, professional response."
+            prompt = f"You are JalDrishti AI. The database currently has {img_count} field images uploaded by citizens. The user asks: {request.query}. Give a short, professional response."
             response = model.generate_content(prompt)
             reply = response.text
         else:

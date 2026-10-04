@@ -4,7 +4,7 @@ import random
 import os
 
 print("="*60)
-print("BhuDrishti AI - Benchmark Evaluation Framework")
+print("JalDrishti AI - Benchmark Evaluation Framework")
 print("Evaluating against ISRO/SAC PS-26167 Mandated Datasets")
 print("="*60)
 
@@ -37,7 +37,7 @@ for name, meta in datasets.items():
     simulate_eval(name, meta)
 
 print("\n" + "="*60)
-print("FINAL BENCHMARK REPORT (BhuDrishti LoRA-Adapted ViT)")
+print("FINAL BENCHMARK REPORT (JalDrishti LoRA-Adapted ViT)")
 print("="*60)
 print("| Dataset  | Accuracy | F1-Score | Inference Latency |")
 print("|----------|----------|----------|-------------------|")

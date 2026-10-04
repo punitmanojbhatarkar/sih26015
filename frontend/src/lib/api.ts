@@ -1,5 +1,5 @@
 // Backend API types and helpers
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://bhudrishti-backend.onrender.com";
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://jaldrishti-backend.onrender.com";
 
 export interface ChatRequest {
   query: string;

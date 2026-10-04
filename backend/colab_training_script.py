@@ -1,5 +1,5 @@
 # ==============================================================================
-# BhuDrishti AI - Remote Sensing Vision Model Fine-Tuning Script
+# JalDrishti AI - Remote Sensing Vision Model Fine-Tuning Script
 # Run this exactly as-is in Google Colab (Free T4 GPU)
 # ==============================================================================
 
@@ -16,7 +16,7 @@ from peft import LoraConfig, get_peft_model
 import numpy as np
 import shutil
 
-print("🚀 Starting BhuDrishti Remote Sensing Fine-Tuning...")
+print("🚀 Starting JalDrishti Remote Sensing Fine-Tuning...")
 
 # 2. Load a 10% subset of BigEarthNet to save time
 print("📦 Downloading BigEarthNet dataset...")
@@ -76,7 +76,7 @@ lora_model.print_trainable_parameters()
 # 6. Train the model
 print("🔥 Starting Training Phase...")
 training_args = TrainingArguments(
-    output_dir="./bhudrishti_rs_model",
+    output_dir="./jaldrishti_rs_model",
     per_device_train_batch_size=32,
     evaluation_strategy="epoch",
     num_train_epochs=3,
@@ -98,8 +98,8 @@ trainer.train()
 
 # 7. Save the adapter weights
 print("✅ Training Complete! Saving adapter weights...")
-lora_model.save_pretrained("bhudrishti_rs_adapter")
+lora_model.save_pretrained("jaldrishti_rs_adapter")
 
 # Zip the folder so it can be easily downloaded from Colab
-shutil.make_archive("bhudrishti_rs_adapter", 'zip', "bhudrishti_rs_adapter")
-print("🎉 Done! Please download 'bhudrishti_rs_adapter.zip' from the Colab files tab.")
+shutil.make_archive("jaldrishti_rs_adapter", 'zip', "jaldrishti_rs_adapter")
+print("🎉 Done! Please download 'jaldrishti_rs_adapter.zip' from the Colab files tab.")

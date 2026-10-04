@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "BhuDrishti -- AI Earth Intelligence Platform",
+  title: "JalDrishti -- AI Earth Intelligence Platform",
   description: "An Agentic Vision-Language Assistant for Multimodal Remote Sensing | SIH 2026 | ISRO PS-26167",
 };
 

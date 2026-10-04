@@ -97,7 +97,7 @@ export default function HomePage() {
           </div>
           <div>
             <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, fontSize: 14, color: "var(--text-1)" }}>
-              BhūDrishti
+              JalDrishti
             </div>
             <div style={{ fontSize: 9, color: "var(--text-3)", letterSpacing: "0.4px" }}>भूदृष्टि · Satellite Intelligence</div>
           </div>

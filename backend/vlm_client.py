@@ -101,7 +101,7 @@ def _build_prompt(location: str, module: str, context: dict) -> str:
     else:
         gee_section = "\n**Note:** GEE real-time metrics are being computed. Base your analysis primarily on visual evidence from the satellite image.\n"
 
-    prompt = f"""You are **BhūDrishti AI** — a senior Remote Sensing and Earth Observation analyst for the Indian Space Research Organisation (ISRO).
+    prompt = f"""You are **JalDrishti AI** — a senior Remote Sensing and Earth Observation analyst for the Indian Space Research Organisation (ISRO).
 
 **MISSION BRIEFING:**
 - Location: {location.title()}, India

@@ -1,9 +1,9 @@
-# 🛰️ BhūDrishti (भू-दृष्टि)
+# 🛰️ JalDrishti (जल-दृष्टि)
 
 **SIH 2026 Winner Submission**
 An Enterprise-Grade, Offline-First Geo-Intelligence Platform for Watershed Management, Disaster Tracking, and Precision Agriculture.
 
-![BhūDrishti Dashboard](https://img.shields.io/badge/Status-Production_Ready-success)
+![JalDrishti Dashboard](https://img.shields.io/badge/Status-Production_Ready-success)
 ![Sentinel Hub](https://img.shields.io/badge/Satellite_Data-Live_Sentinel_2-blue)
 ![Cesium](https://img.shields.io/badge/3D_Engine-CesiumJS-orange)
 ![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688)
@@ -11,8 +11,8 @@ An Enterprise-Grade, Offline-First Geo-Intelligence Platform for Watershed Manag
 ## 🌟 The Problem We Are Solving
 Traditional geospatial analysis requires highly trained GIS analysts, expensive proprietary software (ArcGIS), and hours of manual data ingestion. Field officers lack real-time situational awareness, and there is no unified bridge between **ground-truth field data** and **satellite-based remote sensing**.
 
-## 🚀 Our Solution: BhūDrishti
-BhūDrishti is a highly polished, fully functional GeoAgent platform that bridges the gap between field officers and space-borne sensors. It offers:
+## 🚀 Our Solution: JalDrishti
+JalDrishti is a highly polished, fully functional GeoAgent platform that bridges the gap between field officers and space-borne sensors. It offers:
 
 1. **🌍 Live 3D Satellite Streaming:** Integrated directly with the **European Space Agency's Sentinel Hub**, our 3D Cesium globe natively streams 10-meter resolution Sentinel-2 L2A data. With a single click, users can toggle between True Color, False Color, NDVI (Vegetation), Moisture, and Urban indices. No mockups. 100% real data.
 2. **🤖 GeoAgent AI (Ask the Satellite):** A multimodal AI chat interface that understands spatial context. Users can ask natural language questions (e.g., *"What is the flood extent in Assam?"*). The AI fetches bounding boxes, calculates NDVI scores, and grounds its answers on the map.
