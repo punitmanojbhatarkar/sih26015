@@ -23,7 +23,7 @@ I reviewed your submitted idea slide as a strict SIH evaluator. Here is the verd
 ### ❌ Critical Issues — MUST FIX Before Submission
 1.  **Title says "IDEA TITLE"** — Fatal. If submitted like this, it signals zero preparation. Must be a real, branded name immediately.
 2.  **"AOL Polygon" in the architecture diagram** — This is a typo. It must read **"AOI (Area of Interest) Polygon"**. An evaluator who sees this will immediately doubt your team's attention to detail.
-3.  **No explicit mention of SRISHTI-DRISHTI** in the architecture flow. The PS title literally names this platform. Evaluators from ISRO/DoWR will penalize you for not centering it.
+3.  **No explicit mention of SRISHTI-DRISHTI** in the architecture flow. The PS title literally names this platform. Evaluators from ISRO/DoLR will penalize you for not centering it.
 4.  **GeoRSCLIP is listed but not explained** — The diagram shows it but gives no explanation of WHY it's used. Evaluators unfamiliar with it will skip over it. You must add "Remote Sensing domain-adapted CLIP for semantic image retrieval."
 5.  **The "How we address the problem" section uses tiny text** — In a 10-minute presentation on a projector, 8-point font is invisible. Split into separate slides or use only 3 bold headlines per slide.
 6.  **No connection to PS Expected Solutions (a) through (g)** — SIH evaluators score against the official rubric. You must show you fulfill all 7 expected solutions.
@@ -63,7 +63,7 @@ This is the scoring rubric. Every feature must trace to at least one expected so
 **Project Name:** `JalDrishti` *(Jal = Water, Drishti = Vision)* — OR your team's chosen name.
 **Tagline:** *"Transforming Geo-Tagged Photographs Into Geospatial Intelligence for Watershed Governance"*
 **Sub-line:** *"Where every field photo becomes a spatially validated, AI-analyzed policy evidence record."*
-- Team Name | Institution | PS-15 | SIH 2026 | Ministry: DoWR / MoRD
+- Team Name | Institution | PS-15 | SIH 2026 | Ministry: DoLR / MoRD
 - Background: Full-bleed satellite image of an Indian semi-arid watershed (Vidarbha or Kutch basin).
 
 > **Design:** Dark navy `#0A0F2C` + electric teal `#00E5FF`. Font: Montserrat Bold. Zero white backgrounds.
@@ -71,9 +71,9 @@ This is the scoring rubric. Every feature must trace to at least one expected so
 ---
 
 ### SLIDE 2 — THE GROUND REALITY (The Hook)
-**Heading:** "₹50,000 Crore Invested. 97% of Evidence Never Analyzed."
+**Heading:** "₹8,134 Crore via PMKSY-WDC Invested. 97% of Evidence Never Analyzed."
 **3 Big Numbers (each in a large bold card):**
-- `₹50,000 Cr+` — Government spend on watershed programs (PMKSY, IWMP) — *Source: MoRD 2023*
+- `₹8,134 Cr+ (PMKSY-WDC)` — Government spend on watershed programs (PMKSY, IWMP) — *Source: MoRD 2023*
 - `97%` — Geo-tagged field photos used only for documentation, never for spatial analysis — *Source: NRAA Assessment 2022*
 - `72 hrs` — Time for a district administrator to manually compile a watershed health report — *Our Benchmark*
 
@@ -203,7 +203,7 @@ This is the scoring rubric. Every feature must trace to at least one expected so
 ---
 
 ### SLIDE 10 — KEY INNOVATION #5: AUDIT TRAIL + ANTI-CORRUPTION
-**Heading:** "Bulletproof Accountability for ₹50,000 Crore in Government Funds"
+**Heading:** "Bulletproof Accountability for ₹8,134 Crore via PMKSY-WDC in Government Funds"
 
 **Left — Anti-Tamper Geo-Hash:**
 - At capture: `SHA-256 (pixel_hash + EXIF_GPS + device_IMEI + timestamp)` → stored on-chain.
@@ -275,7 +275,7 @@ This is the scoring rubric. Every feature must trace to at least one expected so
 | WebGIS + AI Pipeline | Federated Learning rollout | Integration with PMKSY MIS |
 | 3D View Frustum Engine | LSTM Drought Forecasting live | National Watershed Dashboard |
 | LULC Auto-classification | AR Field Mode (WebXR) | 5,000+ watersheds onboarded |
-| 7 Thematic Map Layers | Multi-state pilot (3 states) | Open API for NRAA & DoWR |
+| 7 Thematic Map Layers | Multi-state pilot (3 states) | Open API for NRAA & DoLR |
 | Anti-Tamper Audit Chain | Carbon Credit reporting | Policy feedback loop active |
 
 ---
@@ -310,3 +310,8 @@ This is the scoring rubric. Every feature must trace to at least one expected so
 7. **Transitions:** Fade only. No animations, no spinning cubes.
 8. **SRISHTI-DRISHTI:** Must appear by name on Slides 1, 5, 8, and 9. It is in the PS title. Evaluators expect you to center it.
 9. **AOI not AOL:** Fix the typo in your architecture diagram. This one typo can disqualify you in a technical panel.
+
+
+### 🛡️ Judge Q&A Defense
+**Q: The official guidelines (section 7.1.6) say planning DEMs should be no coarser than 2.5m, with imagery preferably 40cm or better. Why are you using 30m?**
+**A:** Our 30m SRTM/Sentinel approach is designed for rapid programme-wide screening and macro-level change detection across 28 States/UTs. For micro-level site checks, the exact same pipeline seamlessly ingests < 2.5m DEMs and sub-meter drone/satellite imagery as specified in section 7.1.6 of the guidelines, ensuring compliance while remaining scalable.
