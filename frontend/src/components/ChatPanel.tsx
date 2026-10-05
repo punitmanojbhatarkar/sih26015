@@ -121,7 +121,7 @@ export default function ChatPanel({ onImageUpdate, onStatsUpdate, geojson }: {
     } catch {
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(), role: "ai",
-        content: "⚠️ Connection error. Please ensure the backend is running on port 8000.",
+        content: "⚠️ Connection error. Please ensure the backend is running and accessible.",
       }]);
     } finally {
       setLoading(false);
@@ -141,7 +141,7 @@ export default function ChatPanel({ onImageUpdate, onStatsUpdate, geojson }: {
       formData.append('file', file);
       
       try {
-        const response = await fetch('http://localhost:8000/api/upload', {
+        const response = await fetch('https://jaldrishti-backend-4rh0.onrender.com/api/upload', {
           method: 'POST',
           body: formData,
         });
@@ -716,3 +716,4 @@ function MessageBubble({ role, content, data }: { role: string; content: string;
     </div>
   );
 }
+

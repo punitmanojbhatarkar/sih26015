@@ -1,5 +1,5 @@
 // Backend API types and helpers
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://jaldrishti-backend.onrender.com";
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://jaldrishti-backend-4rh0.onrender.com";
 
 export interface ChatRequest {
   query: string;
@@ -50,3 +50,4 @@ export async function sendChatMessage(payload: ChatRequest): Promise<ChatRespons
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
+

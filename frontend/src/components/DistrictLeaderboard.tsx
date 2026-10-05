@@ -14,7 +14,7 @@ export default function DistrictLeaderboard({ onClose }: LeaderboardProps) {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://jaldrishti-backend-4rh0.onrender.com";
         const response = await fetch(`${apiUrl}/api/v1/leaderboard`);
         if (response.ok) {
           const data = await response.json();
@@ -183,3 +183,4 @@ export default function DistrictLeaderboard({ onClose }: LeaderboardProps) {
     </div>
   );
 }
+

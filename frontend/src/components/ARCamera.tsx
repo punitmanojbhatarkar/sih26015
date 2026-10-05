@@ -137,7 +137,7 @@ export default function ARCamera({ onClose, onCapture }: ARCameraProps) {
               formData.append("file", file);
               
               try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://jaldrishti-backend-4rh0.onrender.com";
                 await fetch(`${apiUrl}/api/v1/images/upload`, {
                   method: 'POST',
                   body: formData
@@ -175,3 +175,4 @@ export default function ARCamera({ onClose, onCapture }: ARCameraProps) {
     </div>
   );
 }
+

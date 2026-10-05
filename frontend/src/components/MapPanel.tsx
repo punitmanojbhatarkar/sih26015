@@ -156,7 +156,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
         maximumLevel: 18
       }));
     } else {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://jaldrishti-backend-4rh0.onrender.com";
       fetch(`${apiUrl}/api/basemap?layer_type=${activeLayer}`)
         .then(res => res.json())
         .then(data => {
@@ -317,7 +317,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
     
     const loadImages = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://jaldrishti-backend-4rh0.onrender.com";
         const response = await fetch(`${apiUrl}/api/v1/images`);
         if (!response.ok) return;
         const data = await response.json();
