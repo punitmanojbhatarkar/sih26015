@@ -8,6 +8,7 @@ services:
   # The FastAPI Backend
   - type: web
     name: jaldrishti-backend
+    plan: free
     env: python
     buildCommand: "cd backend && pip install -r requirements.txt"
     startCommand: "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
@@ -32,3 +33,4 @@ services:
         fromDatabase:
           name: jaldrishti-db
           property: database
+
