@@ -15,7 +15,7 @@ rasterio
 python-multipart
 ExifRead
 Pillow
-psycopg2-binary
+psycopg[binary]
 asyncpg
 SQLAlchemy
 geoalchemy2
