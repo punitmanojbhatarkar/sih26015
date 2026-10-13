@@ -45,7 +45,7 @@ const MODULE_BADGE: Record<string, string> = {
 
 export default function ChatPanel({ onImageUpdate, onStatsUpdate, geojson }: {
   onImageUpdate?: (url: string, bbox?: number[], centerLat?: number, centerLon?: number, module?: string, geeTileUrl?: string) => void;
-  onStatsUpdate?: (stats: { ndvi?: number; cloud?: number; area?: number; sensor?: string; module?: string }) => void;
+  onStatsUpdate?: (stats: { ndvi?: number; cloud?: number; area?: number; sensor?: string; module?: string; drainage?: any; lulc?: any; change?: any; groundingBoxes?: any[] }) => void;
   geojson?: any;
 }) {
   const [messages, setMessages]   = useState<Message[]>([]);
@@ -109,6 +109,9 @@ export default function ChatPanel({ onImageUpdate, onStatsUpdate, geojson }: {
           sensor: data.sensor,
           module: data.module,
           groundingBoxes: data.grounding_boxes,
+          drainage: data.stats?.drainage,
+          lulc: data.stats?.lulc,
+          change: data.stats?.change,
         });
       }
 

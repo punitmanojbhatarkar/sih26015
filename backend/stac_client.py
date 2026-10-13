@@ -11,8 +11,18 @@ from datetime import datetime, timedelta
 PLANETARY_COMPUTER_URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
 AWS_EARTH_SEARCH_URL   = "https://earth-search.aws.element84.com/v1"
 
-# ── India Bounding Boxes ──
+# ── India Watershed Bounding Boxes ──
 BBOXES = {
+    "rajasthan":   [73.5,  25.0,  76.5, 28.0],
+    "arvari":      [76.1,  27.0,  76.6, 27.4],  # Alwar, Rajasthan community watershed
+    "bundelkhand": [78.2,  24.2,  80.5, 26.0],  # MP/UP drought-prone plateau
+    "narmada":     [76.0,  21.8,  79.5, 23.2],  # Narmada sub-basin
+    "pune":        [73.5,  18.2,  74.4, 19.0],  # Deccan plateau watershed
+    "maharashtra": [73.0,  18.0,  76.0, 20.5],
+    "ralegan":     [74.3,  18.9,  74.5, 19.1],  # Ralegan Siddhi model watershed
+    "hiware":      [74.7,  19.0,  74.9, 19.2],  # Hiware Bazar model watershed
+    "kaveri":      [76.5,  10.8,  79.8, 12.5],  # Cauvery basin
+    "godavari":    [77.0,  18.5,  81.5, 20.0],
     "assam":       [89.5,  25.5,  92.5, 27.5],
     "punjab":      [73.0,  29.5,  76.5, 32.5],
     "bengaluru":   [77.3,  12.8,  77.8, 13.2],
@@ -44,7 +54,7 @@ def _fix_s3_url(url: str, scene_id: str = None) -> str:
 
 def _best_thumbnail(assets: dict) -> str | None:
     """Extract the best publicly accessible thumbnail from a STAC assets dict."""
-    for key in ["rendered_preview", "thumbnail", "overview", "visual", "preview"]:
+    for key in ["thumbnail", "rendered_preview", "overview", "visual", "preview"]:
         href = assets.get(key, {}).get("href")
         if href:
             fixed = _fix_s3_url(href)
@@ -53,7 +63,7 @@ def _best_thumbnail(assets: dict) -> str | None:
     return None
 
 
-def search_sentinel2(bbox: list, date_from: str, date_to: str, max_cloud: int = 30) -> dict:
+def search_sentinel2(bbox: list, date_from: str = None, date_to: str = None, max_cloud: int = 40) -> dict:
     """
     Search for Sentinel-2 optical imagery via AWS Earth Search (FREE, no key needed).
     Returns the best (least cloudy) scene thumbnail URL.
@@ -62,14 +72,11 @@ def search_sentinel2(bbox: list, date_from: str, date_to: str, max_cloud: int = 
         payload = {
             "collections": ["sentinel-2-l2a"],
             "bbox": bbox,
-            "datetime": f"{date_from}T00:00:00Z/{date_to}T23:59:59Z",
-            "query": {"eo:cloud_cover": {"lt": max_cloud}},
-            "sortby": [{"field": "eo:cloud_cover", "direction": "asc"}],
-            "limit": 5,
-            "fields": {
-                "include": ["id", "properties", "assets", "bbox"],
-            }
+            "limit": 10,
         }
+        if date_from and date_to:
+            payload["datetime"] = f"{date_from}T00:00:00Z/{date_to}T23:59:59Z"
+
         resp = requests.post(f"{AWS_EARTH_SEARCH_URL}/search", json=payload, timeout=15)
         resp.raise_for_status()
         data = resp.json()
@@ -78,7 +85,14 @@ def search_sentinel2(bbox: list, date_from: str, date_to: str, max_cloud: int = 
         if not features:
             return {"success": False, "error": "No scenes found", "image_url": None}
 
-        best   = features[0]
+        # Filter and sort by cloud cover
+        valid_features = []
+        for feat in features:
+            cc = feat.get("properties", {}).get("eo:cloud_cover", 100)
+            valid_features.append((cc, feat))
+
+        valid_features.sort(key=lambda x: x[0])
+        best = valid_features[0][1]
         props  = best.get("properties", {})
         assets = best.get("assets", {})
 
@@ -89,7 +103,7 @@ def search_sentinel2(bbox: list, date_from: str, date_to: str, max_cloud: int = 
             "scene_id":    best.get("id"),
             "cloud_cover": round(props.get("eo:cloud_cover", 0), 1),
             "date":        props.get("datetime", "")[:10],
-            "sensor":      "Sentinel-2 L2A",
+            "sensor":      "Sentinel-2 L2A (10m-20m MSI)",
             "image_url":   thumb_url,
             "bbox":        best.get("bbox"),
         }

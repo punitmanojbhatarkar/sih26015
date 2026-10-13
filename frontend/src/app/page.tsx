@@ -14,6 +14,9 @@ interface SatStats {
   area?: number;
   sensor?: string;
   module?: string;
+  drainage?: any;
+  lulc?: any;
+  change?: any;
   groundingBoxes?: any[];
 }
 

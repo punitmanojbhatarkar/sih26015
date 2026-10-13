@@ -36,6 +36,8 @@ export interface ChatResponse {
   area_km2?: number | null;
   gee_tile_url?: string | null;
   compare_years?: number[] | null;
+  grounding_boxes?: any[];
+  stats?: any;
 }
 
 export async function sendChatMessage(payload: ChatRequest): Promise<ChatResponse> {

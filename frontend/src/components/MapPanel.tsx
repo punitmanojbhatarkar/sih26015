@@ -8,8 +8,17 @@ interface MapPanelProps {
   bbox?: number[] | null;         
   centerLat?: number | null;
   centerLon?: number | null;
-  module?: string;
-  stats?: { ndvi?: number; cloud?: number; area?: number; sensor?: string; module?: string };
+  stats?: {
+    ndvi?: number;
+    cloud?: number;
+    area?: number;
+    sensor?: string;
+    module?: string;
+    drainage?: any;
+    lulc?: any;
+    change?: any;
+    groundingBoxes?: any[];
+  };
   onDrawComplete?: (geojson: any | null) => void;
 }
 
@@ -190,7 +199,18 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
     else if (topLayer === "URB") shLayer = "4_FALSE_COLOR_URBAN";
     else if (topLayer === "SAR") shLayer = "5_MOISTURE_INDEX"; // Fallback Moisture for SAR
 
-    if (shLayer) {
+    if (topLayer === "BHUVAN") {
+      const bhuvanProvider = new Cesium.WebMapServiceImageryProvider({
+        url: "https://bhuvan-vec1.nrsc.gov.in/bhuvan/wms",
+        layers: "cite:bhuvan_watershed",
+        parameters: {
+          transparent: 'true',
+          format: 'image/png'
+        }
+      });
+      viewerRef.current.sentinelLayer = viewer.scene.imageryLayers.addImageryProvider(bhuvanProvider);
+      viewerRef.current.sentinelLayer.alpha = 0.85;
+    } else if (shLayer) {
       const wmsProvider = new Cesium.WebMapServiceImageryProvider({
         url: `https://services.sentinel-hub.com/ogc/wms/${SENTINEL_HUB_ID}`,
         layers: shLayer,
@@ -306,6 +326,45 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       });
     }
   }, [stats?.groundingBoxes, cesiumReady]);
+
+  // Effect to render drainage stream network or change detection GeoJSON
+  useEffect(() => {
+    if (!viewerRef.current || !cesiumReady) return;
+    const Cesium = (window as any).Cesium;
+    const viewer = viewerRef.current;
+
+    let targetGeojson = null;
+    let strokeColor = "#0284c7";
+
+    if (stats?.drainage?.geojson) {
+      targetGeojson = stats.drainage.geojson;
+      strokeColor = "#0284c7";
+    } else if (stats?.change?.geojson_change_mask) {
+      targetGeojson = stats.change.geojson_change_mask;
+      strokeColor = "#16a34a";
+    } else if (stats?.lulc?.geojson_layer) {
+      targetGeojson = stats.lulc.geojson_layer;
+      strokeColor = "#38bdf8";
+    }
+
+    if (!targetGeojson) return;
+
+    let dsInstance: any = null;
+    Cesium.GeoJsonDataSource.load(targetGeojson, {
+      stroke: Cesium.Color.fromCssColorString(strokeColor),
+      fill: Cesium.Color.fromCssColorString(strokeColor).withAlpha(0.25),
+      strokeWidth: 3,
+    }).then((ds: any) => {
+      dsInstance = ds;
+      viewer.dataSources.add(ds);
+    }).catch(console.error);
+
+    return () => {
+      if (dsInstance && viewer?.dataSources) {
+        viewer.dataSources.remove(dsInstance);
+      }
+    };
+  }, [stats?.drainage, stats?.change, stats?.lulc, cesiumReady]);
 
   // Effect to load Field Images and Frustums from Backend
   useEffect(() => {
@@ -498,6 +557,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
             { label: "NDVI", key: "NDVI" },
             { label: "Moisture", key: "SAR" },
             { label: "LULC", key: "URB" },
+            { label: "ISRO Bhuvan", key: "BHUVAN" },
           ].map((tab) => (
             <button 
               key={tab.key} 
