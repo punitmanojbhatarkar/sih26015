@@ -9,14 +9,23 @@ import os
 import datetime
 from openai import OpenAI
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "YOUR_GEMINI_API_KEY")
+from dotenv import load_dotenv
+load_dotenv()
+
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 NVIDIA_API_KEY = os.environ.get("NVIDIA_API_KEY", "YOUR_NVIDIA_API_KEY")
+
+CANDIDATE_GEMINI_MODELS = [
+    "gemini-3.1-flash-lite",
+    "gemini-3.8-flash",
+    "gemini-3.5-flash",
+    "gemini-flash-latest",
+]
 
 nvidia_client = OpenAI(
     base_url="https://integrate.api.nvidia.com/v1",
     api_key=NVIDIA_API_KEY
 )
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
 
 FALLBACK_IMAGES = {
     "flood":   "../frontend/public/demo/flood.jpg",
@@ -193,14 +202,27 @@ def analyze_image_with_gemini(
             }
         }
 
-        response = requests.post(GEMINI_URL, headers=headers, data=json.dumps(data), timeout=60)
-        if response.status_code == 200:
-            result = response.json()
-            text = result["candidates"][0]["content"]["parts"][0]["text"]
-            return text.strip()
-        else:
-            print(f"Gemini API Error {response.status_code}: {response.text[:300]}")
-            return generate_fallback_report(module, location, context)
+        for model_name in CANDIDATE_GEMINI_MODELS:
+            try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
+                response = requests.post(url, headers=headers, data=json.dumps(data), timeout=35)
+                if response.status_code == 200:
+                    result = response.json()
+                    candidates = result.get("candidates", [])
+                    if candidates and "content" in candidates[0]:
+                        text = candidates[0]["content"]["parts"][0]["text"]
+                        print(f"Successfully generated analysis with {model_name}!")
+                        return text.strip()
+                elif response.status_code in [503, 429, 404]:
+                    print(f"Model {model_name} returned {response.status_code}, trying next candidate model...")
+                    continue
+                else:
+                    print(f"Gemini API Error with {model_name} ({response.status_code}): {response.text[:200]}")
+            except Exception as model_err:
+                print(f"Error trying {model_name}: {model_err}")
+                continue
+
+        return generate_fallback_report(module, location, context)
 
     except requests.exceptions.Timeout:
         print("Gemini request timed out.")

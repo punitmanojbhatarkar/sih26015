@@ -33,4 +33,5 @@ services:
         fromDatabase:
           name: jaldrishti-db
           property: database
-
+      - key: GEMINI_API_KEY
+        sync: false
