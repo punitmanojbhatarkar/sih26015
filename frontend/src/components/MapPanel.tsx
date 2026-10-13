@@ -292,40 +292,63 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
     const viewer = viewerRef.current;
 
     // Clear old boxes
-    groundingEntitiesRef.current.forEach(entity => viewer.entities.remove(entity));
+    groundingEntitiesRef.current.forEach(entity => {
+      try {
+        if (viewer?.entities && !viewer.isDestroyed?.()) viewer.entities.remove(entity);
+      } catch {}
+    });
     groundingEntitiesRef.current = [];
 
-    if (stats?.groundingBoxes && stats.groundingBoxes.length > 0) {
+    if (stats?.groundingBoxes && Array.isArray(stats.groundingBoxes) && stats.groundingBoxes.length > 0) {
       stats.groundingBoxes.forEach((box: any) => {
-        // box.points is an array of [lon, lat] pairs
-        const flatCoords = box.points.flatMap((pt: number[]) => [pt[0], pt[1]]);
-        
-        const entity = viewer.entities.add({
-          name: box.label,
-          polygon: {
-            hierarchy: Cesium.Cartesian3.fromDegreesArray(flatCoords),
-            material: Cesium.Color.RED.withAlpha(0.2),
-            outline: true,
-            outlineColor: Cesium.Color.RED,
-            outlineWidth: 3
-          },
-          position: Cesium.Cartesian3.fromDegrees(box.points[0][0], box.points[0][1]),
-          label: {
-            text: box.label,
-            font: '12pt monospace',
-            fillColor: Cesium.Color.WHITE,
-            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-            outlineColor: Cesium.Color.BLACK,
-            outlineWidth: 2,
-            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-            pixelOffset: new Cesium.Cartesian2(0, -10)
-          }
-        });
-        
-        groundingEntitiesRef.current.push(entity);
+        let points = box.points;
+        // If box has normalized ymin/xmin/ymax/xmax (Gemini standard 0-1000) and bbox is available
+        if (!points && bbox && box.ymin !== undefined && box.xmin !== undefined) {
+          const [min_lon, min_lat, max_lon, max_lat] = bbox;
+          const bMinLat = min_lat + (box.ymin / 1000) * (max_lat - min_lat);
+          const bMaxLat = min_lat + (box.ymax / 1000) * (max_lat - min_lat);
+          const bMinLon = min_lon + (box.xmin / 1000) * (max_lon - min_lon);
+          const bMaxLon = min_lon + (box.xmax / 1000) * (max_lon - min_lon);
+          points = [
+            [bMinLon, bMinLat],
+            [bMaxLon, bMinLat],
+            [bMaxLon, bMaxLat],
+            [bMinLon, bMaxLat]
+          ];
+        }
+
+        if (!Array.isArray(points) || points.length === 0) return;
+
+        try {
+          const flatCoords = points.flatMap((pt: number[]) => [pt[0], pt[1]]);
+          const entity = viewer.entities.add({
+            name: box.label || "Region",
+            polygon: {
+              hierarchy: Cesium.Cartesian3.fromDegreesArray(flatCoords),
+              material: Cesium.Color.RED.withAlpha(0.2),
+              outline: true,
+              outlineColor: Cesium.Color.RED,
+              outlineWidth: 3
+            },
+            position: Cesium.Cartesian3.fromDegrees(points[0][0], points[0][1]),
+            label: {
+              text: box.label || "Region",
+              font: '12pt monospace',
+              fillColor: Cesium.Color.WHITE,
+              style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+              outlineColor: Cesium.Color.BLACK,
+              outlineWidth: 2,
+              verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+              pixelOffset: new Cesium.Cartesian2(0, -10)
+            }
+          });
+          groundingEntitiesRef.current.push(entity);
+        } catch (e) {
+          console.warn("Failed to render bounding box", e);
+        }
       });
     }
-  }, [stats?.groundingBoxes, cesiumReady]);
+  }, [stats?.groundingBoxes, bbox, cesiumReady]);
 
   // Effect to render drainage stream network or change detection GeoJSON
   useEffect(() => {
@@ -356,13 +379,17 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       strokeWidth: 3,
     }).then((ds: any) => {
       dsInstance = ds;
-      viewer.dataSources.add(ds);
+      if (viewer?.dataSources && !viewer.isDestroyed?.()) {
+        viewer.dataSources.add(ds);
+      }
     }).catch(console.error);
 
     return () => {
-      if (dsInstance && viewer?.dataSources) {
-        viewer.dataSources.remove(dsInstance);
-      }
+      try {
+        if (dsInstance && viewer?.dataSources && !viewer.isDestroyed?.()) {
+          viewer.dataSources.remove(dsInstance);
+        }
+      } catch {}
     };
   }, [stats?.drainage, stats?.change, stats?.lulc, cesiumReady]);
 
@@ -380,7 +407,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
         if (!response.ok) return;
         const data = await response.json();
         
-        if (dataSource) {
+        if (dataSource && viewer?.dataSources && !viewer.isDestroyed?.()) {
           viewer.dataSources.remove(dataSource);
         }
         
@@ -391,7 +418,9 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
           markerSymbol: 'camera'
         }).then((ds: any) => {
           dataSource = ds;
-          viewer.dataSources.add(ds);
+          if (viewer?.dataSources && !viewer.isDestroyed?.()) {
+            viewer.dataSources.add(ds);
+          }
         });
       } catch (err) {
         console.error("Failed to fetch field images", err);
@@ -402,7 +431,11 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
     const interval = setInterval(loadImages, 10000);
     return () => {
       clearInterval(interval);
-      if (dataSource) viewer.dataSources.remove(dataSource);
+      try {
+        if (dataSource && viewer?.dataSources && !viewer.isDestroyed?.()) {
+          viewer.dataSources.remove(dataSource);
+        }
+      } catch {}
     };
   }, [cesiumReady]);
 
