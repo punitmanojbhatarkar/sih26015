@@ -48,13 +48,21 @@ export interface ChatResponse {
 }
 
 export async function sendChatMessage(payload: ChatRequest): Promise<ChatResponse> {
+  const cleanPayload: Record<string, any> = { query: payload.query };
+  if (payload.location) cleanPayload.location = payload.location;
+  if (payload.date) cleanPayload.date = payload.date;
+  if (payload.language) cleanPayload.language = payload.language;
+  if (payload.geojson) cleanPayload.geojson = payload.geojson;
+  if (payload.ai_provider) cleanPayload.ai_provider = payload.ai_provider;
+  if (payload.base64_image) cleanPayload.base64_image = payload.base64_image;
+
   const res = await fetch(`${API_BASE}/api/chat`, {
     method: "POST",
     headers: { 
       "Content-Type": "application/json",
       "Bypass-Tunnel-Reminder": "true" 
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(cleanPayload),
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();

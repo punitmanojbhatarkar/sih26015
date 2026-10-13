@@ -3,6 +3,7 @@ import uuid
 import shutil
 from fastapi import FastAPI, UploadFile, File, BackgroundTasks
 from pydantic import BaseModel
+from typing import Optional, Dict, Any
 import uvicorn
 from image_processor import process_image_pipeline
 from fastapi.middleware.cors import CORSMiddleware
@@ -288,12 +289,12 @@ async def upload_geotiff_alias(background_tasks: BackgroundTasks, file: UploadFi
 
 class ChatRequest(BaseModel):
     query: str
-    location: str = None
-    date: str = None
-    language: str = "en"
-    geojson: dict = None
-    ai_provider: str = "gemini"
-    base64_image: str = None
+    location: Optional[str] = None
+    date: Optional[str] = None
+    language: Optional[str] = "en"
+    geojson: Optional[Dict[str, Any]] = None
+    ai_provider: Optional[str] = "gemini"
+    base64_image: Optional[str] = None
 
 def detect_watershed_module(query: str) -> str:
     """Classifies user intent into one of 5 PS-26015 watershed modules."""
