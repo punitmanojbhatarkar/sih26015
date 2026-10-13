@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { RotateCcw, Image as ImageIcon, Send, Paperclip, ChevronDown, Satellite, X, Waves, Wheat, Building2, Trees, Droplets, Globe, Mic, Loader2, FileDown } from "lucide-react";
+import { RotateCcw, Image as ImageIcon, Send, Paperclip, ChevronDown, Satellite, X, Map, Leaf, GitBranch, Droplets, RefreshCw, Globe, Mic, Loader2, FileDown } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import { sendChatMessage, ChatResponse } from "@/lib/api";
 
@@ -12,11 +12,11 @@ interface Message {
 }
 
 const SUGGESTIONS = [
-  { text: "Analyze flood extent in Assam using SAR imagery", module: "flood" },
-  { text: "Is wheat crop healthy in Punjab this season?",       module: "agri"  },
-  { text: "Detect urban sprawl in Bengaluru since 2018",        module: "urban" },
-  { text: "Show deforestation in Uttarakhand last 5 years",     module: "forest"},
-  { text: "Water level change in Chilika Lake this year",       module: "water" },
+  { text: "Generate land use / land cover map for Rajasthan watershed", module: "landuse" },
+  { text: "Show NDVI vegetation health in Bundelkhand region",       module: "vegetation"  },
+  { text: "Map drainage patterns in Narmada sub-basin",        module: "drainage" },
+  { text: "Analyze soil moisture change pre vs post monsoon",     module: "moisture"},
+  { text: "Detect land use change in Arvari watershed 2020-2026",       module: "change" },
 ];
 
 const LANGUAGES = [
@@ -30,17 +30,17 @@ const LANGUAGES = [
 ];
 
 const SCAN_STEPS = [
-  "Querying STAC catalogue...",
+  "Querying SRISHTI-DRISHTI catalogue...",
   "Searching Sentinel-1/2 archive...",
-  "Fetching satellite thumbnail...",
-  "Running Google Earth Engine...",
-  "Sending image to Gemini Vision...",
-  "Generating intelligence report...",
+  "Fetching geo-coded imagery...",
+  "Running GEE thematic analysis...",
+  "Generating land use classification...",
+  "Building watershed assessment report...",
 ];
 
 const MODULE_BADGE: Record<string, string> = {
-  flood: "badge badge-flood", agri: "badge badge-agri", urban: "badge badge-urban",
-  forest: "badge badge-forest", water: "badge badge-water", general: "badge badge-general",
+  landuse: "badge badge-flood", vegetation: "badge badge-agri", drainage: "badge badge-urban",
+  moisture: "badge badge-forest", change: "badge badge-water", general: "badge badge-general",
 };
 
 export default function ChatPanel({ onImageUpdate, onStatsUpdate, geojson }: {
@@ -193,7 +193,7 @@ export default function ChatPanel({ onImageUpdate, onStatsUpdate, geojson }: {
               JalDrishti GeoAgent
             </div>
             <div style={{ fontSize: 9, color: "var(--text-3)", marginTop: 2, fontFamily: "'JetBrains Mono',monospace" }}>
-              STAC · EarthDial · SAM2 · IndicTrans2
+              SRISHTI-DRISHTI · GEE · Thematic Mapping
             </div>
           </div>
           <div style={{ display: "flex", gap: 5 }}>
@@ -301,8 +301,8 @@ export default function ChatPanel({ onImageUpdate, onStatsUpdate, geojson }: {
                 Ask the Satellite
               </div>
               <div style={{ fontSize: 11, color: "var(--text-3)", lineHeight: 1.6 }}>
-                Query live satellite imagery in natural language.
-                <br />Powered by ISRO Bhuvan · Sentinel · EarthDial VLM
+                Interpret geo-coded images & generate thematic maps for watershed assessment.
+                <br />Powered by SRISHTI-DRISHTI · Sentinel · GEE
               </div>
             </div>
             {/* Suggestion chips */}
@@ -314,11 +314,11 @@ export default function ChatPanel({ onImageUpdate, onStatsUpdate, geojson }: {
                   onClick={() => handleSend(s.text)}
                 >
                   <span style={{ fontSize: 16, flexShrink: 0, color: "var(--text-3)", display: "flex", alignItems: "center" }}>
-                    {s.module === 'flood' ? <Waves size={16} /> : 
-                     s.module === 'agri' ? <Wheat size={16} /> : 
-                     s.module === 'urban' ? <Building2 size={16} /> : 
-                     s.module === 'forest' ? <Trees size={16} /> : 
-                     <Droplets size={16} />}
+                    {s.module === 'landuse' ? <Map size={16} /> : 
+                     s.module === 'vegetation' ? <Leaf size={16} /> : 
+                     s.module === 'drainage' ? <GitBranch size={16} /> : 
+                     s.module === 'moisture' ? <Droplets size={16} /> : 
+                     <RefreshCw size={16} />}
                   </span>
                   <span style={{ flex: 1, textAlign: "left", fontFamily: "'Inter', sans-serif" }}>{s.text}</span>
                   <span className={MODULE_BADGE[s.module] || "badge badge-general"}>{s.module.toUpperCase()}</span>

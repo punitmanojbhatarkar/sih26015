@@ -18,12 +18,12 @@ const INDIA_CENTER: [number, number] = [22.5, 82.0];
 type LayerMode = "satellite" | "optical" | "sar";
 
 const MODULE_COLORS: Record<string, string> = {
-  flood:   "#38bdf8",
-  agri:    "#34d399",
-  urban:   "#fbbf24",
-  forest:  "#22c55e",
-  water:   "#22d3ee",
-  general: "#a78bfa",
+  landuse:   "#38bdf8",
+  vegetation:"#34d399",
+  drainage:  "#fbbf24",
+  moisture:  "#22c55e",
+  change:    "#22d3ee",
+  general:   "#a78bfa",
 };
 
 export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, centerLon, module, stats, onDrawComplete }: MapPanelProps) {
@@ -497,7 +497,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
             { label: "False Color", key: "FC" },
             { label: "NDVI", key: "NDVI" },
             { label: "Moisture", key: "SAR" },
-            { label: "Urban", key: "URB" },
+            { label: "LULC", key: "URB" },
           ].map((tab) => (
             <button 
               key={tab.key} 

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useCallback } from "react";
 import dynamic from "next/dynamic";
-import { Satellite, Globe2, ChevronRight, ChevronLeft, Layers2, Database, Cpu, Sun, Moon, Waves, Wheat, Building2, Trees, Droplets, Trophy, Camera } from "lucide-react";
+import { Satellite, Globe2, ChevronRight, ChevronLeft, Layers2, Database, Cpu, Sun, Moon, Map, Leaf, GitBranch, Droplets, RefreshCw, Trophy, Camera } from "lucide-react";
 import ChatPanel from "@/components/ChatPanel";
 import DistrictLeaderboard from "@/components/DistrictLeaderboard";
 import ARCamera from "@/components/ARCamera";
@@ -27,28 +27,29 @@ interface SatData {
 }
 
 const NAV_MODULES = [
-  { icon: <Waves size={14} />, label: "DisasterWatch", module: "flood" },
-  { icon: <Wheat size={14} />, label: "AgroVision",    module: "agri"  },
-  { icon: <Building2 size={14} />, label: "UrbanPulse",   module: "urban" },
-  { icon: <Trees size={14} />, label: "ForestGuard",  module: "forest"},
-  { icon: <Droplets size={14} />, label: "WaterWatch",   module: "water" },
+  { icon: <Map size={14} />, label: "LandUseMap", module: "landuse" },
+  { icon: <Leaf size={14} />, label: "VegetationIndex",    module: "vegetation"  },
+  { icon: <GitBranch size={14} />, label: "DrainageMap",   module: "drainage" },
+  { icon: <Droplets size={14} />, label: "SoilMoisture",  module: "moisture"},
+  { icon: <RefreshCw size={14} />, label: "ChangeDetect",   module: "change" },
 ];
 
 const DATA_SOURCES = [
+  { name: "SRISHTI-DRISHTI (30m)",    icon: <Globe2 size={14} />, status: "Live" },
   { name: "ISRO Bhuvan WMS",         icon: <Database size={14} />, status: "Live" },
   { name: "Sentinel-1 SAR (ESA)",     icon: <Satellite size={14} />, status: "Live" },
   { name: "Sentinel-2 Optical (ESA)", icon: <Satellite size={14} />, status: "Live" },
   { name: "AWS Earth Search STAC",    icon: <Database size={14} />, status: "Live" },
-  { name: "MS Planetary Computer",    icon: <Globe2 size={14} />, status: "Live" },
   { name: "Google Earth Engine",      icon: <Globe2 size={14} />, status: "Live" },
 ];
 
 const AI_MODELS = [
-  { name: "Gemini 3.7 Flash",  tag: "Vision",   badge: "badge-flood" },
+  { name: "Gemini 2.5 Flash",  tag: "Vision",   badge: "badge-flood" },
   { name: "EarthDial VLM",     tag: "RS-VQA",   badge: "badge-agri" },
-  { name: "SAM2 (Meta)",       tag: "Segment",  badge: "badge-sar" },
-  { name: "IndicTrans2",       tag: "Translate",badge: "badge-water" },
+  { name: "LULC Classifier",   tag: "LandUse",  badge: "badge-sar" },
+  { name: "SAM2 (Meta)",       tag: "Segment",  badge: "badge-water" },
   { name: "GEE (NDVI/SAR)",    tag: "Compute",  badge: "badge-forest" },
+  { name: "IndicTrans2",       tag: "Translate",badge: "badge-general" },
 ];
 
 export default function HomePage() {
@@ -99,7 +100,7 @@ export default function HomePage() {
             <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, fontSize: 14, color: "var(--text-1)" }}>
               JalDrishti
             </div>
-            <div style={{ fontSize: 9, color: "var(--text-3)", letterSpacing: "0.4px" }}>भूदृष्टि · Satellite Intelligence</div>
+            <div style={{ fontSize: 9, color: "var(--text-3)", letterSpacing: "0.4px" }}>भूदृष्टि · Watershed Intelligence</div>
           </div>
         </div>
 
@@ -142,7 +143,7 @@ export default function HomePage() {
             display: "flex", alignItems: "center", gap: 4, fontFamily: "'JetBrains Mono', monospace"
           }}>
             <Globe2 size={10} color="var(--text-3)" />
-            SIH 2026 · PS-26167
+            SIH 2026 · PS-26015
           </div>
 
           {/* Theme toggle */}
@@ -288,7 +289,7 @@ export default function HomePage() {
               <div style={{ marginTop: 14, padding: "10px", background: "var(--bg-hover)", border: "1px solid var(--border-mid)", borderRadius: 10 }}>
                 <div style={{ fontSize: 10, color: "var(--text-3)", marginBottom: 10, textAlign: "center", letterSpacing: "1px" }}>DATA PIPELINE</div>
                 <div style={{ fontSize: 10, color: "var(--accent)", lineHeight: 1.8, fontFamily: "'JetBrains Mono', monospace" }}>
-                  Query → STAC Search → GEE Compute → Gemini Vision → Geo-overlay
+                  Geo-coded Image → SRISHTI-DRISHTI → GEE Compute → Thematic Map → Watershed Assessment
                 </div>
               </div>
             </div>
