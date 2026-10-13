@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Trophy, Medal, Star, MapPin, Activity, X } from "lucide-react";
+import { API_BASE } from "../lib/api";
 
 interface LeaderboardProps {
   onClose: () => void;
@@ -14,8 +15,7 @@ export default function DistrictLeaderboard({ onClose }: LeaderboardProps) {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://jaldrishti-backend-4rh0.onrender.com";
-        const response = await fetch(`${apiUrl}/api/v1/leaderboard`);
+        const response = await fetch(`${API_BASE}/api/v1/leaderboard`);
         if (response.ok) {
           const data = await response.json();
           setDistricts(data.districts || []);

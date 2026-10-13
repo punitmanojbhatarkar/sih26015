@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Camera, Compass, Navigation, X, Target, Zap, Layers2 } from "lucide-react";
+import { API_BASE } from "../lib/api";
 
 interface ARCameraProps {
   onClose: () => void;
@@ -137,8 +138,7 @@ export default function ARCamera({ onClose, onCapture }: ARCameraProps) {
               formData.append("file", file);
               
               try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://jaldrishti-backend-4rh0.onrender.com";
-                await fetch(`${apiUrl}/api/v1/images/upload`, {
+                await fetch(`${API_BASE}/api/v1/images/upload`, {
                   method: 'POST',
                   body: formData
                 });

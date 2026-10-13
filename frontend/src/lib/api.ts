@@ -1,5 +1,12 @@
-// Backend API types and helpers
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://jaldrishti-backend-4rh0.onrender.com";
+function sanitizeApiUrl(raw?: string): string {
+  const url = (raw || "").trim();
+  if (!url || url === "https://jaldrishti-backend.onrender.com" || url === "http://jaldrishti-backend.onrender.com") {
+    return "https://jaldrishti-backend-4rh0.onrender.com";
+  }
+  return url.replace(/\/+$/, "");
+}
+
+export const API_BASE = sanitizeApiUrl(process.env.NEXT_PUBLIC_API_URL);
 
 export interface ChatRequest {
   query: string;

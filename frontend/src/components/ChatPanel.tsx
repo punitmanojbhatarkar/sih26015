@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { RotateCcw, Image as ImageIcon, Send, Paperclip, ChevronDown, Satellite, X, Map, Leaf, GitBranch, Droplets, RefreshCw, Globe, Mic, Loader2, FileDown } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
-import { sendChatMessage, ChatResponse } from "@/lib/api";
+import { sendChatMessage, ChatResponse, API_BASE } from "@/lib/api";
 
 interface Message {
   id: string;
@@ -144,7 +144,7 @@ export default function ChatPanel({ onImageUpdate, onStatsUpdate, geojson }: {
       formData.append('file', file);
       
       try {
-        const response = await fetch('https://jaldrishti-backend-4rh0.onrender.com/api/upload', {
+        const response = await fetch(`${API_BASE}/api/upload`, {
           method: 'POST',
           body: formData,
         });
