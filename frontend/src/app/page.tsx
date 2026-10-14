@@ -30,11 +30,11 @@ interface SatData {
 }
 
 const NAV_MODULES = [
-  { icon: <Map size={14} />, label: "LandUseMap", module: "landuse" },
-  { icon: <Leaf size={14} />, label: "VegetationIndex",    module: "vegetation"  },
-  { icon: <GitBranch size={14} />, label: "DrainageMap",   module: "drainage" },
-  { icon: <Droplets size={14} />, label: "SoilMoisture",  module: "moisture"},
-  { icon: <RefreshCw size={14} />, label: "ChangeDetect",   module: "change" },
+  { icon: <Map size={14} />, label: "LandUseMap", module: "landuse", prompt: "Generate land use / land cover map for Rajasthan watershed" },
+  { icon: <Leaf size={14} />, label: "VegetationIndex", module: "vegetation", prompt: "Show NDVI vegetation health in Bundelkhand region" },
+  { icon: <GitBranch size={14} />, label: "DrainageMap", module: "drainage", prompt: "Map drainage patterns in Narmada sub-basin" },
+  { icon: <Droplets size={14} />, label: "SoilMoisture", module: "moisture", prompt: "Analyze soil moisture change pre vs post monsoon" },
+  { icon: <RefreshCw size={14} />, label: "ChangeDetect", module: "change", prompt: "Detect land use change in Arvari watershed 2020-2026" },
 ];
 
 const DATA_SOURCES = [
@@ -64,6 +64,7 @@ export default function HomePage() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [activeModule, setActiveModule] = useState<string | null>(null);
   const [geojson, setGeojson] = useState<any>(null);
+  const [externalQuery, setExternalQuery] = useState<string | null>(null);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   const handleImageUpdate = useCallback((url: string, bbox?: number[], centerLat?: number, centerLon?: number, module?: string, geeTileUrl?: string) => {
@@ -114,7 +115,11 @@ export default function HomePage() {
           {NAV_MODULES.map(m => (
             <button
               key={m.label}
-              onClick={() => setActiveModule(activeModule === m.module ? null : m.module)}
+              onClick={() => {
+                setActiveModule(m.module);
+                setChatOpen(true);
+                setExternalQuery(m.prompt);
+              }}
               style={{
                 background: activeModule === m.module ? "var(--bg-card)" : "transparent",
                 border: `1px solid ${activeModule === m.module ? "var(--border-mid)" : "transparent"}`,
@@ -240,6 +245,8 @@ export default function HomePage() {
               onImageUpdate={handleImageUpdate}
               onStatsUpdate={handleStatsUpdate}
               geojson={geojson}
+              externalQuery={externalQuery}
+              onClearExternalQuery={() => setExternalQuery(null)}
             />
           </div>
         )}

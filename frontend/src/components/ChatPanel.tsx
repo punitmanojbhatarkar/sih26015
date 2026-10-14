@@ -43,10 +43,12 @@ const MODULE_BADGE: Record<string, string> = {
   moisture: "badge badge-forest", change: "badge badge-water", general: "badge badge-general",
 };
 
-export default function ChatPanel({ onImageUpdate, onStatsUpdate, geojson }: {
+export default function ChatPanel({ onImageUpdate, onStatsUpdate, geojson, externalQuery, onClearExternalQuery }: {
   onImageUpdate?: (url: string, bbox?: number[], centerLat?: number, centerLon?: number, module?: string, geeTileUrl?: string) => void;
   onStatsUpdate?: (stats: { ndvi?: number; cloud?: number; area?: number; sensor?: string; module?: string; drainage?: any; lulc?: any; change?: any; groundingBoxes?: any[] }) => void;
   geojson?: any;
+  externalQuery?: string | null;
+  onClearExternalQuery?: () => void;
 }) {
   const [messages, setMessages]   = useState<Message[]>([]);
   const [input, setInput]         = useState("");
@@ -77,6 +79,13 @@ export default function ChatPanel({ onImageUpdate, onStatsUpdate, geojson }: {
     }
     return () => { if (scanTimer.current) clearInterval(scanTimer.current); };
   }, [loading]);
+
+  useEffect(() => {
+    if (externalQuery && !loading) {
+      handleSend(externalQuery);
+      if (onClearExternalQuery) onClearExternalQuery();
+    }
+  }, [externalQuery]);
 
   const handleSend = async (queryOverride?: string) => {
     const query = (queryOverride || input).trim();
