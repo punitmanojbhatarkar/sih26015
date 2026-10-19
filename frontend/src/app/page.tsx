@@ -167,8 +167,12 @@ export default function HomePage() {
           {/* Info panel toggle */}
           <button
             className="btn-icon hide-on-mobile"
-            style={{ width: 28, height: 28, fontSize: 10 }}
-            onClick={() => setInfoOpen(!infoOpen)}
+            style={{ width: 28, height: 28, fontSize: 10, color: infoOpen ? "var(--accent)" : "inherit" }}
+            onClick={() => {
+              const next = !infoOpen;
+              setInfoOpen(next);
+              if (next) setLeaderboardOpen(false);
+            }}
             title="Data sources & models"
           >
             <Database size={13} />
@@ -178,7 +182,11 @@ export default function HomePage() {
           <button
             className="btn-icon hide-on-mobile"
             style={{ width: 28, height: 28, fontSize: 10, color: leaderboardOpen ? "var(--accent)" : "inherit" }}
-            onClick={() => setLeaderboardOpen(!leaderboardOpen)}
+            onClick={() => {
+              const next = !leaderboardOpen;
+              setLeaderboardOpen(next);
+              if (next) setInfoOpen(false);
+            }}
             title="District Leaderboard & Gamification"
           >
             <Trophy size={13} />
