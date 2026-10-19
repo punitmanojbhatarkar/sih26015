@@ -296,18 +296,68 @@ class ChatRequest(BaseModel):
     ai_provider: Optional[str] = "gemini"
     base64_image: Optional[str] = None
 
+LOCATION_DISPLAY_NAMES = {
+    "chamoli": "Chamoli Valley, Uttarakhand",
+    "joshimath": "Joshimath Catchment, Uttarakhand",
+    "kedarnath": "Kedarnath Mandakini Valley, Uttarakhand",
+    "wayanad": "Wayanad Western Ghats, Kerala",
+    "meppadi": "Meppadi Landslide Zone, Wayanad",
+    "mandi": "Mandi Beas Basin, Himachal Pradesh",
+    "shimla": "Shimla Watershed, Himachal Pradesh",
+    "kullu": "Kullu Valley, Himachal Pradesh",
+    "ladakh": "Leh-Ladakh Glacial Basin, UT Ladakh",
+    "kashmir": "Jhelum Flood Basin, Jammu & Kashmir",
+    "marathwada": "Marathwada Drought Zone, Maharashtra",
+    "vidarbha": "Vidarbha Watershed, Maharashtra",
+    "aurangabad": "Chhatrapati Sambhajinagar, Maharashtra",
+    "solapur": "Solapur Drought Basin, Maharashtra",
+    "latur": "Latur Aquifer Zone, Maharashtra",
+    "rayalaseema": "Rayalaseema Semi-Arid Basin, Andhra Pradesh",
+    "anantapur": "Anantapur Rain-Shadow Zone, Andhra Pradesh",
+    "kurnool": "Kurnool Tungabhadra Basin, Andhra Pradesh",
+    "majuli": "Majuli Brahmaputra Island, Assam",
+    "sundarbans": "Sundarbans Estuary, West Bengal",
+    "chambal": "Chambal Ravines, MP/Rajasthan",
+    "kutch": "Rann of Kutch Wetland, Gujarat",
+    "gir": "Gir Forest Catchment, Gujarat",
+    "thar": "Thar Desert Catchment, Rajasthan",
+    "jaisalmer": "Jaisalmer Arid Zone, Rajasthan",
+    "jodhpur": "Jodhpur Catchment, Rajasthan",
+    "udaipur": "Udaipur Aravalli Lakes, Rajasthan",
+    "alwar": "Alwar Arvari Watershed, Rajasthan",
+    "arvari": "Arvari River Basin, Alwar, Rajasthan",
+    "rajasthan": "Rajasthan Benchmark Watershed",
+    "bundelkhand": "Bundelkhand Plateau, MP/UP",
+    "narmada": "Narmada River Sub-Basin, MP/Gujarat",
+    "pune": "Pune Deccan Watershed, Maharashtra",
+    "maharashtra": "Maharashtra State Watersheds",
+    "ralegan": "Ralegan Siddhi Model Watershed, Maharashtra",
+    "hiware": "Hiware Bazar Model Watershed, Maharashtra",
+    "kaveri": "Cauvery River Basin, Karnataka/TN",
+    "godavari": "Godavari River Basin, Maharashtra/Telangana",
+    "assam": "Assam Brahmaputra Valley",
+    "punjab": "Punjab Agricultural Plain",
+    "bengaluru": "Bengaluru Urban Catchment, Karnataka",
+    "bellandur": "Bellandur Lake Catchment, Bengaluru",
+    "uttarakhand": "Uttarakhand Himalayan Watersheds",
+    "chilika": "Chilika Lagoon, Odisha",
+    "delhi": "Delhi Yamuna Floodplain",
+    "mumbai": "Mumbai Coastal Catchment, Maharashtra",
+    "idukki": "Idukki Reservoir Catchment, Kerala"
+}
+
 def detect_watershed_module(query: str) -> str:
     """Classifies user intent into one of 5 PS-26015 watershed modules."""
     q = query.lower()
-    if any(k in q for k in ["land use", "land cover", "lulc", "classification", "cropland", "scrub", "barren"]):
+    if any(k in q for k in ["land use", "land cover", "lulc", "classification", "cropland", "scrub", "barren", "urban", "fallow"]):
         return "landuse"
-    elif any(k in q for k in ["drainage", "stream", "river", "flow", "channel", "check dam", "percolation", "strahler"]):
+    elif any(k in q for k in ["drainage", "stream", "river", "flow", "channel", "check dam", "percolation", "strahler", "landslide", "debris", "slope", "erosion", "gully", "ravine"]):
         return "drainage"
-    elif any(k in q for k in ["change", "temporal", "difference", "evolution", "trend", "rejuvenation", "history", "compare"]):
+    elif any(k in q for k in ["change", "temporal", "difference", "evolution", "trend", "rejuvenation", "history", "compare", "2020", "2026", "carbon"]):
         return "change"
-    elif any(k in q for k in ["soil moisture", "moisture", "inundation", "waterlogging", "groundwater"]):
+    elif any(k in q for k in ["soil moisture", "moisture", "inundation", "waterlogging", "groundwater", "flood", "submerged", "deluge", "breach", "overflow", "drought", "aquifer", "borewell"]):
         return "moisture"
-    elif any(k in q for k in ["vegetation", "ndvi", "savi", "canopy", "crop health", "biomass", "forest"]):
+    elif any(k in q for k in ["vegetation", "ndvi", "savi", "canopy", "crop health", "biomass", "forest", "tree", "plantation", "leaf area"]):
         return "vegetation"
     return "general"
 
@@ -322,9 +372,16 @@ def resolve_location_and_bbox(query: str, explicit_location: str = None, geojson
     text = f"{explicit_location or ''} {query}".lower()
     for key, bbox in BBOXES.items():
         if key in text:
-            return key.title(), bbox
+            display_name = LOCATION_DISPLAY_NAMES.get(key, key.title())
+            return display_name, bbox
 
-    # Default to Rajasthan Arvari watershed benchmark if none recognized
+    # Try extracting location name from prepositional phrase
+    import re
+    match = re.search(r'\b(?:in|at|near|for|of|around)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)', f"{explicit_location or ''} {query}")
+    if match:
+        extracted = match.group(1).strip()
+        return f"{extracted} Watershed", BBOXES["rajasthan"]
+
     return "Rajasthan Watershed", BBOXES["rajasthan"]
 
 @app.post("/api/chat")

@@ -13,8 +13,10 @@ AWS_EARTH_SEARCH_URL   = "https://earth-search.aws.element84.com/v1"
 
 # ── India Watershed Bounding Boxes ──
 BBOXES = {
+    # Benchmark Watersheds & Rivers
     "rajasthan":   [73.5,  25.0,  76.5, 28.0],
     "arvari":      [76.1,  27.0,  76.6, 27.4],  # Alwar, Rajasthan community watershed
+    "alwar":       [76.3,  27.2,  76.9, 27.8],  # Alwar Arvari watershed cradle
     "bundelkhand": [78.2,  24.2,  80.5, 26.0],  # MP/UP drought-prone plateau
     "narmada":     [76.0,  21.8,  79.5, 23.2],  # Narmada sub-basin
     "pune":        [73.5,  18.2,  74.4, 19.0],  # Deccan plateau watershed
@@ -26,10 +28,45 @@ BBOXES = {
     "assam":       [89.5,  25.5,  92.5, 27.5],
     "punjab":      [73.0,  29.5,  76.5, 32.5],
     "bengaluru":   [77.3,  12.8,  77.8, 13.2],
+    "bellandur":   [77.6,  12.9,  77.7, 12.95], # Bellandur Lake catchment
     "uttarakhand": [78.0,  29.5,  80.5, 31.5],
     "chilika":     [85.0,  19.5,  85.8, 20.2],
     "delhi":       [76.8,  28.4,  77.4, 28.9],
     "mumbai":      [72.7,  18.9,  73.1, 19.3],
+
+    # High-Priority Disaster & Hazard Zones
+    "chamoli":     [79.2,  30.2,  79.9, 30.8],  # Chamoli flash flood / Rishi Ganga
+    "joshimath":   [79.5,  30.5,  79.7, 30.6],  # Joshimath subsidence zone
+    "kedarnath":   [79.0,  30.7,  79.1, 30.8],  # Mandakini valley flash flood
+    "wayanad":     [75.9,  11.5,  76.3, 11.9],  # Wayanad Western Ghats landslide zone
+    "meppadi":     [76.0,  11.5,  76.2, 11.6],  # Meppadi landslide runout
+    "mandi":       [76.8,  31.6,  77.1, 31.8],  # Beas river flash flood
+    "shimla":      [77.0,  31.0,  77.3, 31.2],
+    "kullu":       [77.0,  31.8,  77.3, 32.1],
+    "ladakh":      [76.5,  33.5,  78.5, 35.0],  # Cold desert high altitude
+    "kashmir":     [74.0,  33.5,  75.5, 34.5],  # Jhelum river basin
+
+    # Drought & Ground Water Depletion Zones
+    "marathwada":  [75.0,  18.0,  77.5, 20.0],  # Drought-stressed Marathwada
+    "vidarbha":    [77.5,  19.5,  80.0, 21.5],  # Vidarbha agricultural drought
+    "aurangabad":  [75.1,  19.7,  75.5, 20.0],  # Chhatrapati Sambhajinagar
+    "solapur":     [75.7,  17.5,  76.2, 17.9],
+    "latur":       [76.4,  18.2,  76.8, 18.6],  # Latur drought crisis zone
+    "rayalaseema": [77.0,  13.5,  79.5, 16.0],  # Arid Rayalaseema
+    "anantapur":   [77.4,  14.5,  77.8, 14.8],  # Semi-arid rain-shadow
+    "kurnool":     [77.8,  15.6,  78.3, 16.0],
+
+    # Fluvial, Island & Coastal Estuarine Zones
+    "majuli":      [94.0,  26.8,  94.4, 27.1],  # Brahmaputra river island siltation
+    "sundarbans":  [88.5,  21.6,  89.2, 22.4],  # Mangrove delta & saline ingress
+    "chambal":     [76.5,  25.5,  79.0, 27.0],  # Chambal ravines & gully erosion
+    "kutch":       [69.0,  23.0,  71.0, 24.5],  # Rann of Kutch saline wetlands
+    "gir":         [70.5,  21.0,  71.2, 21.5],  # Gir dry deciduous forest canopy
+    "thar":        [70.0,  25.5,  72.5, 28.0],  # Thar desert sand dunes
+    "jaisalmer":   [70.5,  26.7,  71.5, 27.5],
+    "jodhpur":     [72.8,  26.1,  73.3, 26.5],
+    "udaipur":     [73.5,  24.4,  74.0, 24.8],  # Aravalli lake catchments
+    "idukki":      [76.8,   9.7,  77.2, 10.1],  # Western Ghats reservoir catchment
 }
 
 
