@@ -195,16 +195,28 @@ export default function HomePage() {
 
           {/* Gamification toggle */}
           <button
-            className="btn-icon hide-on-mobile"
-            style={{ width: 28, height: 28, fontSize: 10, color: leaderboardOpen ? "var(--accent)" : "inherit" }}
+            id="gamification-hub-btn"
+            className="btn-secondary hide-on-mobile"
+            style={{ 
+              padding: "4px 9px", 
+              fontSize: 11, 
+              display: "flex", 
+              alignItems: "center", 
+              gap: 5,
+              background: leaderboardOpen ? "rgba(245, 158, 11, 0.18)" : "var(--bg-card)",
+              borderColor: leaderboardOpen ? "#f59e0b" : "var(--border)",
+              color: leaderboardOpen ? "#f59e0b" : "var(--text-1)",
+              fontWeight: 600
+            }}
             onClick={() => {
               const next = !leaderboardOpen;
               setLeaderboardOpen(next);
               if (next) setInfoOpen(false);
             }}
-            title="District Leaderboard & Gamification"
+            title="PMKSY-WDC 2.0 District Leaderboard & Gamification Hub"
           >
-            <Trophy size={13} />
+            <Trophy size={13} color="#f59e0b" />
+            <span>Leaderboard</span>
           </button>
 
           {/* AR Camera toggle */}
@@ -247,7 +259,18 @@ export default function HomePage() {
 
         {/* ── District Leaderboard (floating left) ── */}
         {leaderboardOpen && (
-          <DistrictLeaderboard onClose={() => setLeaderboardOpen(false)} />
+          <DistrictLeaderboard 
+            onClose={() => setLeaderboardOpen(false)} 
+            onSelectDistrict={(query) => {
+              setChatOpen(true);
+              setExternalQuery(query);
+              setLeaderboardOpen(false);
+            }}
+            onOpenUpload={() => {
+              setCameraOpen(true);
+              setLeaderboardOpen(false);
+            }}
+          />
         )}
 
         {/* ── AR Field Camera (Full Screen Overlay) ── */}
