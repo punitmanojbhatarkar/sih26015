@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { 
   Trophy, Star, MapPin, Activity, X, Search, 
   ChevronRight, ChevronDown, Camera, Satellite, 
-  ArrowUpRight, CheckCircle2, ShieldCheck, Award
+  ArrowUpRight, CheckCircle2, ShieldCheck, Award, Sparkles
 } from "lucide-react";
 import { API_BASE } from "../lib/api";
 
@@ -29,6 +29,7 @@ interface VolunteerItem {
   badge: string;
   uploads: number;
   specialty: string;
+  isCurrentUser?: boolean;
 }
 
 interface LeaderboardProps {
@@ -161,24 +162,78 @@ export default function DistrictLeaderboard({ onClose, onSelectDistrict, onOpenU
   const [expandedDistrict, setExpandedDistrict] = useState<string | null>("Alwar (Arvari Basin)");
   const [expandedVolunteer, setExpandedVolunteer] = useState<string | null>(null);
 
+  const refreshLocalData = () => {
+    if (typeof window === "undefined") return;
+    try {
+      // 1. Districts with bonus
+      const bonus = JSON.parse(localStorage.getItem("jaldrishti_district_bonus") || "{}");
+      setDistricts(prev => prev.map(d => {
+        const added = bonus[d.name] || 0;
+        if (added > 0) {
+          const base = DEFAULT_DISTRICTS.find(x => x.name === d.name) || d;
+          return {
+            ...d,
+            reports: base.reports + added,
+            points: base.points + (added * 50)
+          };
+        }
+        return d;
+      }));
+
+      // 2. Volunteers with local additions
+      const local = JSON.parse(localStorage.getItem("jaldrishti_local_volunteers") || "[]");
+      if (Array.isArray(local) && local.length > 0) {
+        setVolunteers(() => {
+          const combined = [
+            ...local,
+            ...DEFAULT_VOLUNTEERS.filter(def => !local.some((l: any) => l.name.replace(" (You)", "") === def.name))
+          ].sort((a: any, b: any) => b.points - a.points)
+           .map((v: any, idx: number) => ({
+             ...v,
+             rank: idx + 1,
+             badge: idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : "🌟"
+           }));
+          return combined;
+        });
+      }
+    } catch (e) {
+      console.error("Local data refresh error:", e);
+    }
+  };
+
   useEffect(() => {
+    refreshLocalData();
+    window.addEventListener("jaldrishti_volunteer_added", refreshLocalData);
+    window.addEventListener("storage", refreshLocalData);
+
     const fetchLeaderboard = async () => {
       try {
         const response = await fetch(`${API_BASE}/api/v1/leaderboard`);
         if (response.ok) {
           const data = await response.json();
           if (data.districts && Array.isArray(data.districts) && data.districts.length > 0) {
-            // merge with rich default properties
             setDistricts(prev => data.districts.map((d: any, idx: number) => ({
               ...prev[idx % prev.length],
               ...d
             })));
           }
           if (data.volunteers && Array.isArray(data.volunteers) && data.volunteers.length > 0) {
-            setVolunteers(prev => data.volunteers.map((v: any, idx: number) => ({
-              ...prev[idx % prev.length],
-              ...v
-            })));
+            setVolunteers(() => {
+              let local: any[] = [];
+              try {
+                local = JSON.parse(localStorage.getItem("jaldrishti_local_volunteers") || "[]");
+              } catch (e) {}
+              const combined = [
+                ...local,
+                ...data.volunteers
+              ].sort((a: any, b: any) => b.points - a.points)
+               .map((v: any, idx: number) => ({
+                 ...v,
+                 rank: idx + 1,
+                 badge: idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : "🌟"
+               }));
+              return combined;
+            });
           }
         }
       } catch (e) {
@@ -186,6 +241,11 @@ export default function DistrictLeaderboard({ onClose, onSelectDistrict, onOpenU
       }
     };
     fetchLeaderboard();
+
+    return () => {
+      window.removeEventListener("jaldrishti_volunteer_added", refreshLocalData);
+      window.removeEventListener("storage", refreshLocalData);
+    };
   }, []);
 
   const filteredDistricts = districts.filter(d => 
@@ -478,8 +538,19 @@ export default function DistrictLeaderboard({ onClose, onSelectDistrict, onOpenU
                     <div style={{ fontSize: 24, flexShrink: 0 }}>{v.badge}</div>
                     
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)", display: "flex", alignItems: "center", gap: 5 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)", display: "flex", alignItems: "center", gap: 6 }}>
                         {v.name}
+                        {(v.isCurrentUser || v.name.includes("(You)")) && (
+                          <span style={{ 
+                            fontSize: 9, padding: "2px 7px", 
+                            background: "rgba(34, 197, 94, 0.25)", color: "var(--accent-green)", 
+                            borderRadius: 10, fontWeight: 700, border: "1px solid rgba(34, 197, 94, 0.4)",
+                            display: "inline-flex", alignItems: "center", gap: 3
+                          }}>
+                            <Sparkles size={9} />
+                            YOU
+                          </span>
+                        )}
                       </div>
                       <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>
                         {v.role} · <span style={{ color: "var(--text-2)" }}>{v.district}</span>

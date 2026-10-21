@@ -57,7 +57,7 @@ def compute_anti_tamper_hash(image_path: str, exif_data: dict, device_imei: str 
 from sqlalchemy import text
 from db import engine
 
-def process_image_pipeline(file_path: str, device_imei: str = "UNKNOWN"):
+def process_image_pipeline(file_path: str, device_imei: str = "UNKNOWN", uploader_id: str = "Anonymous"):
     """Background task to process uploaded image."""
     print(f"Starting processing for {file_path}")
     
@@ -131,14 +131,15 @@ def process_image_pipeline(file_path: str, device_imei: str = "UNKNOWN"):
         # Everything goes into ai_insights JSONB.
         insert_query = text(f"""
             INSERT INTO field_images 
-            (image_url, geom, azimuth, elevation, view_frustum, ai_insights, confidence_score, status, capture_timestamp)
-            VALUES (:image_url, {geom_sql}, :azimuth, :elevation, {frustum_sql}, :ai_insights, :confidence_score, :status, :capture_timestamp)
+            (image_url, uploader_id, geom, azimuth, elevation, view_frustum, ai_insights, confidence_score, status, capture_timestamp)
+            VALUES (:image_url, :uploader_id, {geom_sql}, :azimuth, :elevation, {frustum_sql}, :ai_insights, :confidence_score, :status, :capture_timestamp)
             RETURNING id;
         """)
         
         with engine.connect() as conn:
             result = conn.execute(insert_query, {
                 "image_url": file_path,
+                "uploader_id": uploader_id,
                 "azimuth": azimuth,
                 "elevation": 300.0,
                 "ai_insights": json.dumps(ai_insights),
@@ -148,7 +149,7 @@ def process_image_pipeline(file_path: str, device_imei: str = "UNKNOWN"):
             })
             new_id = result.scalar()
             conn.commit()
-            print(f"Successfully inserted field_image record ID: {new_id}")
+            print(f"Successfully inserted field_image record ID: {new_id} for volunteer: {uploader_id}")
             
     except Exception as e:
         print(f"Database insert error: {e}")

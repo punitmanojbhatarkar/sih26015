@@ -5,6 +5,7 @@ import { Satellite, Globe2, ChevronRight, ChevronLeft, Layers2, Database, Cpu, S
 import ChatPanel from "@/components/ChatPanel";
 import DistrictLeaderboard from "@/components/DistrictLeaderboard";
 import ARCamera from "@/components/ARCamera";
+import VolunteerUploadModal from "@/components/VolunteerUploadModal";
 
 const MapPanel = dynamic(() => import("@/components/MapPanel"), { ssr: false });
 
@@ -61,6 +62,7 @@ export default function HomePage() {
   const [chatOpen, setChatOpen] = useState(true);
   const [infoOpen, setInfoOpen] = useState(false);
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [activeModule, setActiveModule] = useState<string | null>(null);
   const [geojson, setGeojson] = useState<any>(null);
@@ -219,12 +221,12 @@ export default function HomePage() {
             <span>Leaderboard</span>
           </button>
 
-          {/* AR Camera toggle */}
+          {/* Volunteer Upload / AR Camera toggle */}
           <button
             className="btn-icon"
-            style={{ width: 28, height: 28, fontSize: 10, color: cameraOpen ? "var(--accent-green)" : "inherit" }}
-            onClick={() => setCameraOpen(!cameraOpen)}
-            title="AR Field Camera"
+            style={{ width: 28, height: 28, fontSize: 10, color: uploadModalOpen ? "var(--accent-green)" : "inherit" }}
+            onClick={() => setUploadModalOpen(true)}
+            title="Volunteer Field Audit & Photo Upload (+50 Pts)"
           >
             <Camera size={13} />
           </button>
@@ -267,8 +269,19 @@ export default function HomePage() {
               setLeaderboardOpen(false);
             }}
             onOpenUpload={() => {
-              setCameraOpen(true);
+              setUploadModalOpen(true);
               setLeaderboardOpen(false);
+            }}
+          />
+        )}
+
+        {/* ── Volunteer Field Upload Modal (+50 Pts) ── */}
+        {uploadModalOpen && (
+          <VolunteerUploadModal 
+            onClose={() => setUploadModalOpen(false)}
+            onSuccess={() => {
+              setUploadModalOpen(false);
+              setLeaderboardOpen(true);
             }}
           />
         )}

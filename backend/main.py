@@ -1,7 +1,7 @@
 import os
 import uuid
 import shutil
-from fastapi import FastAPI, UploadFile, File, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import uvicorn
@@ -139,7 +139,11 @@ async def export_qgis():
 @app.post("/api/v1/images/upload", response_model=ImageResponse)
 async def upload_field_image(
     background_tasks: BackgroundTasks,
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    uploader_name: Optional[str] = Form(None),
+    district: Optional[str] = Form(None),
+    role: Optional[str] = Form(None),
+    structure_type: Optional[str] = Form(None)
 ):
     # 1. Generate unique ID and save file locally (Mocking S3)
     image_id = str(uuid.uuid4())
@@ -149,13 +153,14 @@ async def upload_field_image(
     with open(local_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     
-    # 2. Add AI Inference and EXIF extraction to Background task
-    background_tasks.add_task(process_image_pipeline, local_path)
+    uploader_id = uploader_name or "Anonymous"
+    # 2. Add AI Inference and EXIF extraction to Background task with volunteer attribution
+    background_tasks.add_task(process_image_pipeline, local_path, uploader_id=uploader_id)
     
     return ImageResponse(
         id=image_id,
         status="processing",
-        message="Image uploaded successfully. AI processing initiated in background."
+        message=f"Image uploaded successfully for {uploader_id}. AI processing initiated in background."
     )
 
 class WebhookPayload(BaseModel):
