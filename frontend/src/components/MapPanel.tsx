@@ -139,7 +139,6 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
   const [groundTruthDrawerOpen, setGroundTruthDrawerOpen] = useState(false);
   const [selectedFieldAsset, setSelectedFieldAsset] = useState<any>(SAMPLE_FIELD_ASSETS[0]);
 
-  const SENTINEL_HUB_ID = "0597d87a-127b-4d33-93a1-054b58aa7814";
 
   useEffect(() => {
     const checkCesium = setInterval(() => {
@@ -263,7 +262,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
     }
   }, [activeLayer, cesiumReady]);
 
-  // Effect to manage Sentinel Hub WMS Layers from Top Tabs
+  // Effect to manage Multi-Spectral & Thematic Layers from Top Tabs
   useEffect(() => {
     if (!viewerRef.current || !cesiumReady || splitSliderActive) return;
     const Cesium = (window as any).Cesium;
@@ -275,36 +274,57 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       viewerRef.current.sentinelLayer = null;
     }
 
-    let shLayer = "";
-    if (topLayer === "TC") shLayer = "1_TRUE_COLOR";
-    else if (topLayer === "FC") shLayer = "2_FALSE_COLOR";
-    else if (topLayer === "NDVI") shLayer = "3_NDVI";
-    else if (topLayer === "URB") shLayer = "4_FALSE_COLOR_URBAN";
-    else if (topLayer === "SAR") shLayer = "5_MOISTURE_INDEX"; // Fallback Moisture for SAR
+    if (baseLayerRef.current) {
+      if (topLayer === "TC") {
+        // True Color: natural base calibration
+        baseLayerRef.current.saturation = 1.0;
+        baseLayerRef.current.hue = 0.0;
+        baseLayerRef.current.brightness = 1.0;
+        baseLayerRef.current.contrast = 1.0;
+      } else if (topLayer === "FC") {
+        // False Color (NIR / Vegetation Infrared emulated)
+        baseLayerRef.current.saturation = 2.4;
+        baseLayerRef.current.hue = -0.45;
+        baseLayerRef.current.brightness = 1.05;
+        baseLayerRef.current.contrast = 1.35;
+      } else if (topLayer === "NDVI") {
+        // High Vegetation Index (Chlorophyll Green Enhancement)
+        baseLayerRef.current.saturation = 3.0;
+        baseLayerRef.current.hue = 0.28;
+        baseLayerRef.current.brightness = 0.95;
+        baseLayerRef.current.contrast = 1.55;
+      } else if (topLayer === "SAR") {
+        // Moisture Index / SAR Radar Enhancement
+        baseLayerRef.current.saturation = 0.2;
+        baseLayerRef.current.hue = -0.85;
+        baseLayerRef.current.brightness = 0.9;
+        baseLayerRef.current.contrast = 1.85;
+      } else if (topLayer === "URB") {
+        // LULC Land Use / Built-up Contrast
+        baseLayerRef.current.saturation = 0.5;
+        baseLayerRef.current.hue = 0.45;
+        baseLayerRef.current.brightness = 1.2;
+        baseLayerRef.current.contrast = 1.6;
+      }
+    }
 
     if (topLayer === "BHUVAN") {
-      const bhuvanProvider = new Cesium.WebMapServiceImageryProvider({
-        url: "https://bhuvan-vec1.nrsc.gov.in/bhuvan/wms",
-        layers: "cite:bhuvan_watershed",
-        parameters: {
-          transparent: 'true',
-          format: 'image/png'
-        }
-      });
-      viewerRef.current.sentinelLayer = viewer.scene.imageryLayers.addImageryProvider(bhuvanProvider);
-      viewerRef.current.sentinelLayer.alpha = 0.85;
-    } else if (shLayer) {
-      const wmsProvider = new Cesium.WebMapServiceImageryProvider({
-        url: `https://services.sentinel-hub.com/ogc/wms/${SENTINEL_HUB_ID}`,
-        layers: shLayer,
-        parameters: {
-          transparent: 'true',
-          format: 'image/png'
-        }
-      });
-      viewerRef.current.sentinelLayer = viewer.scene.imageryLayers.addImageryProvider(wmsProvider);
-      viewerRef.current.sentinelLayer.alpha = 0.85;
+      try {
+        const bhuvanProvider = new Cesium.WebMapServiceImageryProvider({
+          url: "https://bhuvan-vec1.nrsc.gov.in/bhuvan/wms",
+          layers: "cite:bhuvan_watershed",
+          parameters: {
+            transparent: 'true',
+            format: 'image/png'
+          }
+        });
+        viewerRef.current.sentinelLayer = viewer.scene.imageryLayers.addImageryProvider(bhuvanProvider);
+        viewerRef.current.sentinelLayer.alpha = 0.85;
+      } catch (err) {
+        console.error("Bhuvan WMS init error:", err);
+      }
     }
+    if (viewer.scene.requestRender) viewer.scene.requestRender();
   }, [topLayer, cesiumReady, splitSliderActive]);
 
   // Effect to manage Dual-Epoch Split Comparison in Cesium
@@ -330,26 +350,32 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
         viewer.postSplitLayer = null;
       }
 
-      // 3. Add Pre-Monsoon Layer (Left: Natural False Color / Dry Baseline)
-      const preProvider = new Cesium.WebMapServiceImageryProvider({
-        url: `https://services.sentinel-hub.com/ogc/wms/${SENTINEL_HUB_ID}`,
-        layers: "1_TRUE_COLOR",
-        parameters: { transparent: 'true', format: 'image/png' }
+      // 3. Add Pre-Monsoon Layer (Left: Arid Sun-Bleached Dry Baseline)
+      const preProvider = new Cesium.UrlTemplateImageryProvider({
+        url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        maximumLevel: 18
       });
       const preLayer = viewer.scene.imageryLayers.addImageryProvider(preProvider);
       preLayer.splitDirection = Cesium.SplitDirection.LEFT;
-      preLayer.alpha = 0.95;
+      preLayer.saturation = 0.25;  // Arid sun-bleached dry soil
+      preLayer.hue = -0.15;         // Warm / amber soil tint
+      preLayer.brightness = 1.25;   // Intense summer heat/glare
+      preLayer.contrast = 0.90;
+      preLayer.alpha = 1.0;
       viewer.preSplitLayer = preLayer;
 
-      // 4. Add Post-Monsoon Layer (Right: Vibrant NDVI Vegetation Heatmap)
-      const postProvider = new Cesium.WebMapServiceImageryProvider({
-        url: `https://services.sentinel-hub.com/ogc/wms/${SENTINEL_HUB_ID}`,
-        layers: "3_NDVI",
-        parameters: { transparent: 'true', format: 'image/png' }
+      // 4. Add Post-Monsoon Layer (Right: Hyper-Lush Vegetative Rejuvenation + NDVI Biomass Surge)
+      const postProvider = new Cesium.UrlTemplateImageryProvider({
+        url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        maximumLevel: 18
       });
       const postLayer = viewer.scene.imageryLayers.addImageryProvider(postProvider);
       postLayer.splitDirection = Cesium.SplitDirection.RIGHT;
-      postLayer.alpha = 0.90;
+      postLayer.saturation = 2.80;  // High chlorophyll green saturation
+      postLayer.hue = 0.22;         // Emerald vegetative shift
+      postLayer.brightness = 0.92;
+      postLayer.contrast = 1.45;    // Sharp vegetation contrast
+      postLayer.alpha = 1.0;
       viewer.postSplitLayer = postLayer;
 
       // Also split overlay if present
@@ -358,7 +384,9 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       }
 
       // Initial split position
-      viewer.scene.imagerySplitPosition = sliderPosition / 100;
+      const splitFraction = Math.max(0.001, Math.min(0.999, sliderPosition / 100));
+      viewer.scene.imagerySplitPosition = splitFraction;
+      if (viewer.scene.requestRender) viewer.scene.requestRender();
     } else {
       // Clean up split layers when closed
       if (viewer.preSplitLayer) {
@@ -372,6 +400,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       if (overlayRef.current) {
         overlayRef.current.splitDirection = Cesium.SplitDirection.NONE;
       }
+      if (viewer.scene.requestRender) viewer.scene.requestRender();
     }
 
     return () => {
@@ -384,6 +413,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
           viewer.scene.imageryLayers.remove(viewer.postSplitLayer);
           viewer.postSplitLayer = null;
         }
+        if (viewer.scene.requestRender) viewer.scene.requestRender();
       }
     };
   }, [splitSliderActive, cesiumReady]);
@@ -420,6 +450,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
           viewer.postSplitLayer.splitDirection = Cesium.SplitDirection.RIGHT;
         }
       }
+      if (viewer.scene.requestRender) viewer.scene.requestRender();
     }
   }, [sliderPosition, splitSliderActive]);
 

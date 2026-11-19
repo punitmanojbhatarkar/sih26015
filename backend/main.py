@@ -276,8 +276,8 @@ async def get_basemap(layer_type: str = "satellite"):
     elif layer_type == "optical":
         return {"url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "type": "xyz"}
     elif layer_type == "sar":
-        # Global open Sentinel-1 SAR mosaic tile provider
-        return {"url": "https://services.sentinel-hub.com/ogc/wms/0597d87a-127b-4d33-93a1-054b58aa7814?SERVICE=WMS&REQUEST=GetMap&LAYERS=5_MOISTURE_INDEX&FORMAT=image/png&TRANSPARENT=true", "type": "wms"}
+        # Global open Sentinel-1 / SAR radar calibrated basemap
+        return {"url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "type": "xyz"}
     else:
         return {"url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "type": "xyz"}
 
