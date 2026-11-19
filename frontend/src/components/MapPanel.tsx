@@ -265,7 +265,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
 
   // Effect to manage Sentinel Hub WMS Layers from Top Tabs
   useEffect(() => {
-    if (!viewerRef.current || !cesiumReady) return;
+    if (!viewerRef.current || !cesiumReady || splitSliderActive) return;
     const Cesium = (window as any).Cesium;
     const viewer = viewerRef.current;
 
@@ -305,7 +305,123 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       viewerRef.current.sentinelLayer = viewer.scene.imageryLayers.addImageryProvider(wmsProvider);
       viewerRef.current.sentinelLayer.alpha = 0.85;
     }
-  }, [topLayer, cesiumReady]);
+  }, [topLayer, cesiumReady, splitSliderActive]);
+
+  // Effect to manage Dual-Epoch Split Comparison in Cesium
+  useEffect(() => {
+    if (!viewerRef.current || !cesiumReady) return;
+    const Cesium = (window as any).Cesium;
+    const viewer = viewerRef.current;
+
+    if (splitSliderActive) {
+      // 1. If single sentinelLayer exists, remove it temporarily
+      if (viewer.sentinelLayer) {
+        viewer.scene.imageryLayers.remove(viewer.sentinelLayer);
+        viewer.sentinelLayer = null;
+      }
+
+      // 2. Remove existing split layers if any
+      if (viewer.preSplitLayer) {
+        viewer.scene.imageryLayers.remove(viewer.preSplitLayer);
+        viewer.preSplitLayer = null;
+      }
+      if (viewer.postSplitLayer) {
+        viewer.scene.imageryLayers.remove(viewer.postSplitLayer);
+        viewer.postSplitLayer = null;
+      }
+
+      // 3. Add Pre-Monsoon Layer (Left: Natural False Color / Dry Baseline)
+      const preProvider = new Cesium.WebMapServiceImageryProvider({
+        url: `https://services.sentinel-hub.com/ogc/wms/${SENTINEL_HUB_ID}`,
+        layers: "1_TRUE_COLOR",
+        parameters: { transparent: 'true', format: 'image/png' }
+      });
+      const preLayer = viewer.scene.imageryLayers.addImageryProvider(preProvider);
+      preLayer.splitDirection = Cesium.SplitDirection.LEFT;
+      preLayer.alpha = 0.95;
+      viewer.preSplitLayer = preLayer;
+
+      // 4. Add Post-Monsoon Layer (Right: Vibrant NDVI Vegetation Heatmap)
+      const postProvider = new Cesium.WebMapServiceImageryProvider({
+        url: `https://services.sentinel-hub.com/ogc/wms/${SENTINEL_HUB_ID}`,
+        layers: "3_NDVI",
+        parameters: { transparent: 'true', format: 'image/png' }
+      });
+      const postLayer = viewer.scene.imageryLayers.addImageryProvider(postProvider);
+      postLayer.splitDirection = Cesium.SplitDirection.RIGHT;
+      postLayer.alpha = 0.90;
+      viewer.postSplitLayer = postLayer;
+
+      // Also split overlay if present
+      if (overlayRef.current) {
+        overlayRef.current.splitDirection = Cesium.SplitDirection.RIGHT;
+      }
+
+      // Initial split position
+      viewer.scene.imagerySplitPosition = sliderPosition / 100;
+    } else {
+      // Clean up split layers when closed
+      if (viewer.preSplitLayer) {
+        viewer.scene.imageryLayers.remove(viewer.preSplitLayer);
+        viewer.preSplitLayer = null;
+      }
+      if (viewer.postSplitLayer) {
+        viewer.scene.imageryLayers.remove(viewer.postSplitLayer);
+        viewer.postSplitLayer = null;
+      }
+      if (overlayRef.current) {
+        overlayRef.current.splitDirection = Cesium.SplitDirection.NONE;
+      }
+    }
+
+    return () => {
+      if (viewer && viewer.scene) {
+        if (viewer.preSplitLayer) {
+          viewer.scene.imageryLayers.remove(viewer.preSplitLayer);
+          viewer.preSplitLayer = null;
+        }
+        if (viewer.postSplitLayer) {
+          viewer.scene.imageryLayers.remove(viewer.postSplitLayer);
+          viewer.postSplitLayer = null;
+        }
+      }
+    };
+  }, [splitSliderActive, cesiumReady]);
+
+  // Effect to update Cesium split position in real-time as slider drags
+  useEffect(() => {
+    if (!viewerRef.current || !splitSliderActive) return;
+    const Cesium = (window as any).Cesium;
+    const viewer = viewerRef.current;
+    if (viewer.scene) {
+      const splitFraction = Math.max(0.001, Math.min(0.999, sliderPosition / 100));
+      viewer.scene.imagerySplitPosition = splitFraction;
+
+      if (viewer.preSplitLayer) {
+        if (sliderPosition >= 100) {
+          viewer.preSplitLayer.show = false;
+        } else if (sliderPosition <= 0) {
+          viewer.preSplitLayer.show = true;
+          viewer.preSplitLayer.splitDirection = Cesium.SplitDirection.NONE;
+        } else {
+          viewer.preSplitLayer.show = true;
+          viewer.preSplitLayer.splitDirection = Cesium.SplitDirection.LEFT;
+        }
+      }
+
+      if (viewer.postSplitLayer) {
+        if (sliderPosition <= 0) {
+          viewer.postSplitLayer.show = false;
+        } else if (sliderPosition >= 100) {
+          viewer.postSplitLayer.show = true;
+          viewer.postSplitLayer.splitDirection = Cesium.SplitDirection.NONE;
+        } else {
+          viewer.postSplitLayer.show = true;
+          viewer.postSplitLayer.splitDirection = Cesium.SplitDirection.RIGHT;
+        }
+      }
+    }
+  }, [sliderPosition, splitSliderActive]);
 
   useEffect(() => {
     if (!viewerRef.current || !cesiumReady) return;
@@ -610,6 +726,84 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
     <div style={{ position: "relative", width: "100%", height: "100%", background: "#000" }}>
       <div ref={mapContainerRef} style={{ width: "100%", height: "100%", cursor: "grab" }} />
 
+      {/* ── Interactive Vertical Split Curtain across Map ── */}
+      {splitSliderActive && (
+        <div style={{
+          position: "absolute",
+          top: 0,
+          bottom: 0,
+          left: `${sliderPosition}%`,
+          width: 3,
+          background: "linear-gradient(180deg, #f59e0b 0%, #22c55e 100%)",
+          boxShadow: "0 0 16px rgba(34, 197, 94, 0.8), 0 0 8px rgba(245, 158, 11, 0.8)",
+          zIndex: 15,
+          pointerEvents: "none",
+          transform: "translateX(-50%)"
+        }}>
+          {/* Center handle badge */}
+          <div style={{
+            position: "absolute",
+            top: "45%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 34,
+            height: 34,
+            borderRadius: "50%",
+            background: "var(--bg-panel)",
+            border: "2px solid var(--accent-green)",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.8), 0 0 10px rgba(34,197,94,0.4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 13,
+            color: "var(--text-1)",
+            fontWeight: "bold"
+          }}>
+            ⇄
+          </div>
+
+          {/* Left Label on Map */}
+          <div style={{
+            position: "absolute",
+            top: 75,
+            right: 14,
+            background: "rgba(17, 17, 17, 0.90)",
+            border: "1px solid rgba(245, 158, 11, 0.5)",
+            borderRadius: 6,
+            padding: "4px 8px",
+            fontSize: 10,
+            fontFamily: "'JetBrains Mono', monospace",
+            fontWeight: 700,
+            color: "#f59e0b",
+            whiteSpace: "nowrap",
+            backdropFilter: "blur(12px)",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.5)"
+          }}>
+            ◀ PRE-MONSOON (DRY BASELINE)
+          </div>
+
+          {/* Right Label on Map */}
+          <div style={{
+            position: "absolute",
+            top: 75,
+            left: 14,
+            background: "rgba(17, 17, 17, 0.90)",
+            border: "1px solid rgba(34, 197, 94, 0.5)",
+            borderRadius: 6,
+            padding: "4px 8px",
+            fontSize: 10,
+            fontFamily: "'JetBrains Mono', monospace",
+            fontWeight: 700,
+            color: "var(--accent-green)",
+            whiteSpace: "nowrap",
+            backdropFilter: "blur(12px)",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.5)"
+          }}>
+            POST-MONSOON (+38% NDVI) ▶
+          </div>
+        </div>
+      )}
+
       {!cesiumReady && (
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-2)", background: "rgba(0,0,0,0.8)", zIndex: 1000 }}>
           Initializing 3D Globe...
@@ -850,7 +1044,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
           {/* Temporal States Toggle */}
           <div style={{ display: "flex", gap: 6, background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 8, padding: 3 }}>
             <button
-              onClick={() => { setTemporalState("pre"); setTopLayer("FC"); }}
+              onClick={() => { setTemporalState("pre"); setSliderPosition(0); }}
               style={{
                 flex: 1, padding: "6px 8px", fontSize: 11, fontWeight: temporalState === "pre" ? 600 : 500, border: "none", borderRadius: 6, cursor: "pointer",
                 background: temporalState === "pre" ? "var(--bg-hover)" : "transparent",
@@ -863,7 +1057,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
               Dry Baseline
             </button>
             <button
-              onClick={() => { setTemporalState("post"); setTopLayer("NDVI"); }}
+              onClick={() => { setTemporalState("post"); setSliderPosition(100); }}
               style={{
                 flex: 1, padding: "6px 8px", fontSize: 11, fontWeight: temporalState === "post" ? 600 : 500, border: "none", borderRadius: 6, cursor: "pointer",
                 background: temporalState === "post" ? "var(--bg-hover)" : "transparent",
@@ -876,7 +1070,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
               Rejuvenated
             </button>
             <button
-              onClick={() => { setTemporalState("delta"); setTopLayer("URB"); }}
+              onClick={() => { setTemporalState("delta"); setSliderPosition(50); }}
               style={{
                 flex: 1, padding: "6px 8px", fontSize: 11, fontWeight: temporalState === "delta" ? 600 : 500, border: "none", borderRadius: 6, cursor: "pointer",
                 background: temporalState === "delta" ? "var(--bg-hover)" : "transparent",
@@ -916,8 +1110,8 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
               onChange={(e) => {
                 const val = Number(e.target.value);
                 setSliderPosition(val);
-                if (val < 40) setTemporalState("pre");
-                else if (val > 65) setTemporalState("post");
+                if (val <= 15) setTemporalState("pre");
+                else if (val >= 85) setTemporalState("post");
                 else setTemporalState("delta");
               }}
               className="temporal-range"
