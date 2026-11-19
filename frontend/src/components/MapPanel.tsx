@@ -808,8 +808,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       {splitSliderActive && (
         <div className="fade-up" style={{
           position: "absolute", bottom: 22,
-          left: (chatOpen && isDesktop) ? "calc((100% - 410px) / 2)" : "50%",
-          transform: "translateX(-50%)",
+          left: (chatOpen && isDesktop) ? "clamp(65px, calc((100% - 420px - 480px) / 2), 50%)" : "calc((100% - 480px) / 2)",
           zIndex: 25, background: "var(--bg-panel)", border: "1px solid var(--border-mid)",
           borderRadius: 14, padding: "12px 18px", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
           boxShadow: "0 16px 40px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.04)", display: "flex", flexDirection: "column", gap: 10,
