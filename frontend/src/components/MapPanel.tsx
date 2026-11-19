@@ -350,31 +350,37 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
         viewer.postSplitLayer = null;
       }
 
-      // 3. Add Pre-Monsoon Layer (Left: Arid Sun-Bleached Dry Baseline)
+      // 3. HIDE the base layer — it has splitDirection=NONE so it renders
+      //    across the full viewport and washes out the color-graded split layers
+      if (baseLayerRef.current) {
+        baseLayerRef.current.show = false;
+      }
+
+      // 4. Add Pre-Monsoon Layer (Left: Arid Sun-Bleached Dry Baseline)
       const preProvider = new Cesium.UrlTemplateImageryProvider({
         url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         maximumLevel: 18
       });
       const preLayer = viewer.scene.imageryLayers.addImageryProvider(preProvider);
       preLayer.splitDirection = Cesium.SplitDirection.LEFT;
-      preLayer.saturation = 0.25;  // Arid sun-bleached dry soil
-      preLayer.hue = -0.15;         // Warm / amber soil tint
-      preLayer.brightness = 1.25;   // Intense summer heat/glare
-      preLayer.contrast = 0.90;
+      preLayer.saturation = 0.15;   // Very desaturated arid soil
+      preLayer.hue = -0.20;          // Strong warm amber / brown tint
+      preLayer.brightness = 1.30;    // Harsh summer sun glare
+      preLayer.contrast = 0.85;
       preLayer.alpha = 1.0;
       viewer.preSplitLayer = preLayer;
 
-      // 4. Add Post-Monsoon Layer (Right: Hyper-Lush Vegetative Rejuvenation + NDVI Biomass Surge)
+      // 5. Add Post-Monsoon Layer (Right: Hyper-Lush Vegetative Rejuvenation + NDVI Biomass Surge)
       const postProvider = new Cesium.UrlTemplateImageryProvider({
         url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         maximumLevel: 18
       });
       const postLayer = viewer.scene.imageryLayers.addImageryProvider(postProvider);
       postLayer.splitDirection = Cesium.SplitDirection.RIGHT;
-      postLayer.saturation = 2.80;  // High chlorophyll green saturation
-      postLayer.hue = 0.22;         // Emerald vegetative shift
-      postLayer.brightness = 0.92;
-      postLayer.contrast = 1.45;    // Sharp vegetation contrast
+      postLayer.saturation = 3.20;   // Extreme chlorophyll green bloom
+      postLayer.hue = 0.28;          // Deep emerald vegetative shift
+      postLayer.brightness = 0.88;
+      postLayer.contrast = 1.55;     // Sharp vegetation contrast
       postLayer.alpha = 1.0;
       viewer.postSplitLayer = postLayer;
 
@@ -400,6 +406,10 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       if (overlayRef.current) {
         overlayRef.current.splitDirection = Cesium.SplitDirection.NONE;
       }
+      // RESTORE the base layer
+      if (baseLayerRef.current) {
+        baseLayerRef.current.show = true;
+      }
       if (viewer.scene.requestRender) viewer.scene.requestRender();
     }
 
@@ -412,6 +422,10 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
         if (viewer.postSplitLayer) {
           viewer.scene.imageryLayers.remove(viewer.postSplitLayer);
           viewer.postSplitLayer = null;
+        }
+        // Restore base layer on cleanup
+        if (baseLayerRef.current) {
+          baseLayerRef.current.show = true;
         }
         if (viewer.scene.requestRender) viewer.scene.requestRender();
       }
