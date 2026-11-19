@@ -352,10 +352,10 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       });
       const preLayer = viewer.scene.imageryLayers.addImageryProvider(preProvider);
       preLayer.splitDirection = Cesium.SplitDirection.LEFT;
-      preLayer.saturation = 0.15;   // Very desaturated arid soil
-      preLayer.hue = -0.20;          // Strong warm amber / brown tint
-      preLayer.brightness = 1.30;    // Harsh summer sun glare
-      preLayer.contrast = 0.85;
+      preLayer.saturation = 0.35;   // Arid sun-bleached dry soil
+      preLayer.hue = -0.05;          // Warm amber / parched earth tint
+      preLayer.brightness = 1.15;    // Summer sun glare
+      preLayer.contrast = 1.05;
       preLayer.alpha = 1.0;
       viewer.preSplitLayer = preLayer;
 
@@ -366,10 +366,10 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       });
       const postLayer = viewer.scene.imageryLayers.addImageryProvider(postProvider);
       postLayer.splitDirection = Cesium.SplitDirection.RIGHT;
-      postLayer.saturation = 3.20;   // Extreme chlorophyll green bloom
-      postLayer.hue = 0.28;          // Deep emerald vegetative shift
-      postLayer.brightness = 0.88;
-      postLayer.contrast = 1.55;     // Sharp vegetation contrast
+      postLayer.saturation = 2.10;   // High chlorophyll vegetative bloom
+      postLayer.hue = 0.12;          // Emerald vegetative canopy shift
+      postLayer.brightness = 1.00;    // Clear post-monsoon lighting
+      postLayer.contrast = 1.25;     // Crisp field parcel boundaries
       postLayer.alpha = 1.0;
       viewer.postSplitLayer = postLayer;
 
@@ -378,9 +378,9 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
         overlayRef.current.splitDirection = Cesium.SplitDirection.RIGHT;
       }
 
-      // Initial split position
+      // Initial split position - In Cesium, the property is scene.splitPosition
       const splitFraction = Math.max(0.001, Math.min(0.999, sliderPosition / 100));
-      viewer.scene.imagerySplitPosition = splitFraction;
+      viewer.scene.splitPosition = splitFraction;
       if (viewer.scene.requestRender) viewer.scene.requestRender();
     } else {
       // Clean up split layers when closed
@@ -428,7 +428,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
     const viewer = viewerRef.current;
     if (viewer.scene) {
       const splitFraction = Math.max(0.001, Math.min(0.999, sliderPosition / 100));
-      viewer.scene.imagerySplitPosition = splitFraction;
+      viewer.scene.splitPosition = splitFraction;
 
       if (viewer.preSplitLayer) {
         if (sliderPosition >= 100) {
