@@ -796,65 +796,105 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       {/* ── Interactive Multi-Temporal Split Slider HUD ── */}
       {splitSliderActive && (
         <div className="fade-up" style={{
-          position: "absolute", top: 12, left: "50%", transform: "translateX(-50%)",
-          zIndex: 25, background: "rgba(15, 23, 42, 0.94)", border: "1px solid rgba(56, 189, 248, 0.4)",
-          borderRadius: 12, padding: "10px 18px", backdropFilter: "blur(20px)",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.55)", display: "flex", flexDirection: "column", gap: 8,
-          minWidth: 420, maxWidth: "90vw"
+          position: "absolute", bottom: 22, left: "50%", transform: "translateX(-50%)",
+          zIndex: 25, background: "var(--bg-panel)", border: "1px solid var(--border-mid)",
+          borderRadius: 14, padding: "12px 18px", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
+          boxShadow: "0 16px 40px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.04)", display: "flex", flexDirection: "column", gap: 10,
+          width: 480, maxWidth: "min(480px, calc(100vw - 32px))"
         }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, color: "#38bdf8", textTransform: "uppercase", letterSpacing: 0.6 }}>
-              <SlidersHorizontal size={14} />
-              <span>Multi-Temporal Watershed Change Detector (Pre vs. Post Monsoon)</span>
+          {/* Header */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--border)", paddingBottom: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{
+                width: 26, height: 26, borderRadius: 6,
+                background: "rgba(39, 103, 73, 0.22)", border: "1px solid var(--border-mid)",
+                display: "flex", alignItems: "center", justifyContent: "center"
+              }}>
+                <SlidersHorizontal size={13} color="var(--accent-green)" />
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)", fontFamily: "'Space Grotesk', sans-serif", display: "flex", alignItems: "center", gap: 6 }}>
+                  Multi-Temporal Change Detector
+                  <span style={{ fontSize: 9.5, padding: "2px 6px", borderRadius: 10, background: "rgba(56, 161, 105, 0.15)", color: "var(--accent-green)", fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>
+                    Output (e)
+                  </span>
+                </div>
+                <div style={{ fontSize: 10, color: "var(--text-3)", letterSpacing: "0.2px" }}>
+                  Pre vs. Post Monsoon Calibrated Satellite Comparison
+                </div>
+              </div>
             </div>
             <button
               onClick={() => setSplitSliderActive(false)}
-              style={{ background: "transparent", border: "none", color: "var(--text-3)", cursor: "pointer", padding: 2 }}
+              className="btn-icon"
+              style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--bg-hover)", border: "1px solid var(--border)" }}
+              title="Close Slider"
             >
-              <X size={14} />
+              <X size={13} />
             </button>
           </div>
 
           {/* Temporal States Toggle */}
-          <div style={{ display: "flex", gap: 6, background: "rgba(0,0,0,0.4)", borderRadius: 8, padding: 3 }}>
+          <div style={{ display: "flex", gap: 6, background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 8, padding: 3 }}>
             <button
               onClick={() => { setTemporalState("pre"); setTopLayer("FC"); }}
               style={{
-                flex: 1, padding: "5px 8px", fontSize: 10.5, fontWeight: 600, border: "none", borderRadius: 6, cursor: "pointer",
-                background: temporalState === "pre" ? "rgba(239, 68, 68, 0.25)" : "transparent",
-                color: temporalState === "pre" ? "#f87171" : "var(--text-3)",
-                transition: "all 0.2s"
+                flex: 1, padding: "6px 8px", fontSize: 11, fontWeight: temporalState === "pre" ? 600 : 500, border: "none", borderRadius: 6, cursor: "pointer",
+                background: temporalState === "pre" ? "var(--bg-hover)" : "transparent",
+                color: temporalState === "pre" ? "var(--text-1)" : "var(--text-3)",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                transition: "all 0.18s ease"
               }}
             >
-              ☀️ Dry Baseline (Pre-Monsoon)
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#f59e0b" }} />
+              Dry Baseline
             </button>
             <button
               onClick={() => { setTemporalState("post"); setTopLayer("NDVI"); }}
               style={{
-                flex: 1, padding: "5px 8px", fontSize: 10.5, fontWeight: 600, border: "none", borderRadius: 6, cursor: "pointer",
-                background: temporalState === "post" ? "rgba(34, 197, 94, 0.25)" : "transparent",
-                color: temporalState === "post" ? "#4ade80" : "var(--text-3)",
-                transition: "all 0.2s"
+                flex: 1, padding: "6px 8px", fontSize: 11, fontWeight: temporalState === "post" ? 600 : 500, border: "none", borderRadius: 6, cursor: "pointer",
+                background: temporalState === "post" ? "var(--bg-hover)" : "transparent",
+                color: temporalState === "post" ? "var(--text-1)" : "var(--text-3)",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                transition: "all 0.18s ease"
               }}
             >
-              🌿 Rejuvenated (Post-Monsoon)
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent-green)" }} />
+              Rejuvenated
             </button>
             <button
               onClick={() => { setTemporalState("delta"); setTopLayer("URB"); }}
               style={{
-                flex: 1, padding: "5px 8px", fontSize: 10.5, fontWeight: 600, border: "none", borderRadius: 6, cursor: "pointer",
-                background: temporalState === "delta" ? "rgba(56, 189, 248, 0.25)" : "transparent",
-                color: temporalState === "delta" ? "#38bdf8" : "var(--text-3)",
-                transition: "all 0.2s"
+                flex: 1, padding: "6px 8px", fontSize: 11, fontWeight: temporalState === "delta" ? 600 : 500, border: "none", borderRadius: 6, cursor: "pointer",
+                background: temporalState === "delta" ? "var(--bg-hover)" : "transparent",
+                color: temporalState === "delta" ? "var(--text-1)" : "var(--text-3)",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                transition: "all 0.18s ease"
               }}
             >
-              📊 Biomass Surge (+38% NDVI)
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#38bdf8" }} />
+              Biomass (+38%)
             </button>
           </div>
 
           {/* Interactive Range Slider */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 9.5, color: "#f87171", fontWeight: 700, textTransform: "uppercase" }}>Pre-Monsoon</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
+              <span style={{ color: "#f59e0b", display: "flex", alignItems: "center", gap: 4, fontWeight: 600 }}>
+                <span>☀️</span> PRE-MONSOON (MAR)
+              </span>
+              <span style={{ 
+                padding: "2px 8px", borderRadius: 10, 
+                background: "var(--bg-card)", border: "1px solid var(--border)", 
+                color: "var(--text-1)", fontWeight: 700 
+              }}>
+                {sliderPosition}% SPLIT
+              </span>
+              <span style={{ color: "var(--accent-green)", display: "flex", alignItems: "center", gap: 4, fontWeight: 600 }}>
+                POST-MONSOON (OCT) <span>🌿</span>
+              </span>
+            </div>
+
             <input
               type="range"
               min="0"
@@ -867,12 +907,18 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
                 else if (val > 65) setTemporalState("post");
                 else setTemporalState("delta");
               }}
-              style={{ flex: 1, accentColor: "#38bdf8", cursor: "pointer" }}
+              className="temporal-range"
             />
-            <span style={{ fontSize: 9.5, color: "#4ade80", fontWeight: 700, textTransform: "uppercase" }}>Post-Monsoon</span>
           </div>
-          <div style={{ fontSize: 9, color: "var(--text-3)", textAlign: "center", fontFamily: "monospace" }}>
-            Temporal Split Offset: {sliderPosition}% · Sentinel-2 MSI Calibrated Difference
+
+          {/* Subtitle / Telemetry */}
+          <div style={{
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            fontSize: 9.5, color: "var(--text-3)", fontFamily: "'JetBrains Mono', monospace",
+            borderTop: "1px solid var(--border)", paddingTop: 6
+          }}>
+            <span>🛰️ Sentinel-2 MSI Multi-Spectral Difference</span>
+            <span style={{ color: "var(--accent-green)", fontWeight: 600 }}>ΔNDVI +0.38 Surge</span>
           </div>
         </div>
       )}
@@ -881,19 +927,19 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       {groundTruthDrawerOpen && (
         <div className="slide-left" style={{
           position: "absolute", top: 12, right: 12, bottom: 35, width: 340,
-          background: "rgba(15, 23, 42, 0.94)", border: "1px solid rgba(16, 185, 129, 0.35)",
-          borderRadius: 12, padding: "14px", backdropFilter: "blur(24px)",
-          boxShadow: "-8px 0 32px rgba(0,0,0,0.6)", zIndex: 30, display: "flex", flexDirection: "column", gap: 10,
+          background: "var(--bg-panel)", border: "1px solid var(--border-mid)",
+          borderRadius: 14, padding: "14px", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
+          boxShadow: "-8px 0 32px rgba(0,0,0,0.65)", zIndex: 30, display: "flex", flexDirection: "column", gap: 10,
           overflowY: "auto"
         }}>
           {/* Header */}
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: 8 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", borderBottom: "1px solid var(--border)", paddingBottom: 8 }}>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 5, color: "#10b981", fontSize: 9.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 5, color: "var(--accent-green)", fontSize: 9.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>
                 <ShieldCheck size={14} />
                 <span>AI Ground-Truth Verification</span>
               </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#f8fafc", marginTop: 2 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)", marginTop: 2, fontFamily: "'Space Grotesk', sans-serif" }}>
                 {selectedFieldAsset.title}
               </div>
               <div style={{ fontSize: 9.5, color: "var(--text-3)", marginTop: 1 }}>
@@ -902,9 +948,11 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
             </div>
             <button
               onClick={() => setGroundTruthDrawerOpen(false)}
-              style={{ background: "transparent", border: "none", color: "var(--text-3)", cursor: "pointer", padding: 4 }}
+              className="btn-icon"
+              style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--bg-hover)", border: "1px solid var(--border)" }}
+              title="Close Drawer"
             >
-              <X size={16} />
+              <X size={13} />
             </button>
           </div>
 
