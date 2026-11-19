@@ -256,6 +256,7 @@ export default function HomePage() {
           centerLon={satData.centerLon}
           module={satData.module || activeModule || undefined}
           stats={stats}
+          chatOpen={chatOpen}
           onDrawComplete={handleDrawComplete}
         />
 

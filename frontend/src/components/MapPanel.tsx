@@ -9,6 +9,8 @@ interface MapPanelProps {
   bbox?: number[] | null;         
   centerLat?: number | null;
   centerLon?: number | null;
+  module?: string;
+  chatOpen?: boolean;
   stats?: {
     ndvi?: number;
     cloud?: number;
@@ -99,7 +101,7 @@ const SAMPLE_FIELD_ASSETS = [
   }
 ];
 
-export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, centerLon, module, stats, onDrawComplete }: MapPanelProps) {
+export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, centerLon, module, stats, onDrawComplete, chatOpen }: MapPanelProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<any>(null);
   const overlayRef = useRef<any>(null);
@@ -108,6 +110,15 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
   const drawEntityRef = useRef<any>(null);
   const drawHandlerRef = useRef<any>(null);
   const groundingEntitiesRef = useRef<any[]>([]);
+
+  const [isDesktop, setIsDesktop] = useState(true);
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth > 992);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const [activeLayer, setActiveLayer] = useState<LayerMode>("satellite");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -796,11 +807,14 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       {/* ── Interactive Multi-Temporal Split Slider HUD ── */}
       {splitSliderActive && (
         <div className="fade-up" style={{
-          position: "absolute", bottom: 22, left: "50%", transform: "translateX(-50%)",
+          position: "absolute", bottom: 22,
+          left: (chatOpen && isDesktop) ? "calc((100% - 410px) / 2)" : "50%",
+          transform: "translateX(-50%)",
           zIndex: 25, background: "var(--bg-panel)", border: "1px solid var(--border-mid)",
           borderRadius: 14, padding: "12px 18px", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
           boxShadow: "0 16px 40px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.04)", display: "flex", flexDirection: "column", gap: 10,
-          width: 480, maxWidth: "min(480px, calc(100vw - 32px))"
+          width: 480, maxWidth: (chatOpen && isDesktop) ? "min(480px, calc(100vw - 460px))" : "min(480px, calc(100vw - 32px))",
+          transition: "left 0.3s cubic-bezier(.22,1,.36,1)"
         }}>
           {/* Header */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--border)", paddingBottom: 8 }}>
@@ -926,11 +940,14 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       {/* ── Ground-Truth Field Photo Inspector Drawer ── */}
       {groundTruthDrawerOpen && (
         <div className="slide-left" style={{
-          position: "absolute", top: 12, right: 12, bottom: 35, width: 340,
+          position: "absolute", top: 12,
+          right: (chatOpen && isDesktop) ? 420 : 12,
+          bottom: 35, width: 340,
           background: "var(--bg-panel)", border: "1px solid var(--border-mid)",
           borderRadius: 14, padding: "14px", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
           boxShadow: "-8px 0 32px rgba(0,0,0,0.65)", zIndex: 30, display: "flex", flexDirection: "column", gap: 10,
-          overflowY: "auto"
+          overflowY: "auto",
+          transition: "right 0.3s cubic-bezier(.22,1,.36,1)"
         }}>
           {/* Header */}
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", borderBottom: "1px solid var(--border)", paddingBottom: 8 }}>
