@@ -496,6 +496,15 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
     }
   }, [showWeather, cesiumReady]);
 
+  // Auto-activate multi-temporal split comparison when Change Detection module is triggered
+  useEffect(() => {
+    if (module === "change" || stats?.change) {
+      setSplitSliderActive(true);
+      setTemporalState("delta");
+      setSliderPosition(50);
+    }
+  }, [module, stats]);
+
   // Effect to fly to the bounding box
   useEffect(() => {
     if (!viewerRef.current || !cesiumReady || !bbox) return;
@@ -767,42 +776,94 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
     if (onDrawComplete) onDrawComplete(null);
   }, [onDrawComplete]);
 
+  // Direct dragging of the split curtain divider on the 3D map canvas
+  const isDraggingSplitRef = useRef(false);
+
+  const handleSplitDragStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isDraggingSplitRef.current = true;
+
+    const onMove = (moveEvent: MouseEvent | TouchEvent) => {
+      if (!isDraggingSplitRef.current || !mapContainerRef.current) return;
+      const rect = mapContainerRef.current.getBoundingClientRect();
+      const clientX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      const pct = Math.max(0, Math.min(100, Math.round(((clientX - rect.left) / rect.width) * 100)));
+      setSliderPosition(pct);
+      if (pct <= 15) setTemporalState("pre");
+      else if (pct >= 85) setTemporalState("post");
+      else setTemporalState("delta");
+    };
+
+    const onEnd = () => {
+      isDraggingSplitRef.current = false;
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onEnd);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("touchend", onEnd);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onEnd);
+    window.addEventListener("touchmove", onMove);
+    window.addEventListener("touchend", onEnd);
+  }, []);
+
   return (
     <div style={{ position: "relative", width: "100%", height: "100%", background: "#000" }}>
       <div ref={mapContainerRef} style={{ width: "100%", height: "100%", cursor: "grab" }} />
 
       {/* ── Interactive Vertical Split Curtain across Map ── */}
       {splitSliderActive && (
-        <div style={{
-          position: "absolute",
-          top: 0,
-          bottom: 0,
-          left: `${sliderPosition}%`,
-          width: 3,
-          background: "linear-gradient(180deg, #f59e0b 0%, #22c55e 100%)",
-          boxShadow: "0 0 16px rgba(34, 197, 94, 0.8), 0 0 8px rgba(245, 158, 11, 0.8)",
-          zIndex: 15,
-          pointerEvents: "none",
-          transform: "translateX(-50%)"
-        }}>
-          {/* Center handle badge */}
+        <div 
+          onMouseDown={handleSplitDragStart}
+          onTouchStart={handleSplitDragStart}
+          title="Drag left/right to compare Pre vs Post Monsoon"
+          style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: `${sliderPosition}%`,
+            width: 24,
+            marginLeft: -12,
+            cursor: "ew-resize",
+            zIndex: 15,
+            pointerEvents: "all",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          {/* Glowing Vertical Line */}
           <div style={{
             position: "absolute",
-            top: "45%",
+            top: 0,
+            bottom: 0,
             left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 34,
-            height: 34,
+            transform: "translateX(-50%)",
+            width: 3,
+            background: "linear-gradient(180deg, #f59e0b 0%, #22c55e 100%)",
+            boxShadow: "0 0 16px rgba(34, 197, 94, 0.8), 0 0 8px rgba(245, 158, 11, 0.8)",
+            pointerEvents: "none"
+          }} />
+
+          {/* Center handle badge */}
+          <div style={{
+            position: "relative",
+            width: 36,
+            height: 36,
             borderRadius: "50%",
             background: "var(--bg-panel)",
             border: "2px solid var(--accent-green)",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.8), 0 0 10px rgba(34,197,94,0.4)",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.8), 0 0 12px rgba(34,197,94,0.5)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: 13,
+            fontSize: 14,
             color: "var(--text-1)",
-            fontWeight: "bold"
+            fontWeight: "bold",
+            cursor: "ew-resize",
+            userSelect: "none"
           }}>
             ⇄
           </div>

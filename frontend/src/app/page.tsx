@@ -121,6 +121,15 @@ export default function HomePage() {
                 setActiveModule(m.module);
                 setChatOpen(true);
                 setExternalQuery(m.prompt);
+                if (m.module === "change") {
+                  setSatData(prev => ({
+                    ...prev,
+                    module: "change",
+                    centerLat: 27.2415,
+                    centerLon: 76.3812,
+                    bbox: [76.28, 27.15, 76.48, 27.35]
+                  }));
+                }
               }}
               style={{
                 background: activeModule === m.module ? "var(--bg-card)" : "transparent",
