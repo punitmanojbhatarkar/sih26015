@@ -470,8 +470,9 @@ async def chat_endpoint(request: ChatRequest):
         if request.language and request.language.lower() not in ["en", "english"]:
             report_text = translate_text(report_text, request.language)
 
-        # 6. Compose Bhuvan WMS Overlay URL for Map Visualization
-        bhuvan_tile_url = build_bhuvan_getmap_url("watershed", bbox)
+        # 6. Compose Geospatial Visualization Context
+        # Bhuvan WMS is accessed for metadata and server-side processing, not raw client-side CORS calls
+        gee_tile_url = None
 
         return {
             "reply": report_text,
@@ -489,7 +490,7 @@ async def chat_endpoint(request: ChatRequest):
             "stac_source": "AWS Earth Search STAC (Sentinel-2 L2A)",
             "ndvi_score": analysis_context.get("NDVI", 0.44),
             "area_km2": analysis_context.get("total_area_km2", 420.0),
-            "gee_tile_url": bhuvan_tile_url,
+            "gee_tile_url": gee_tile_url,
             "grounding_boxes": grounding_boxes,
             "stats": extra_stats
         }

@@ -305,23 +305,12 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
         baseLayerRef.current.hue = 0.45;
         baseLayerRef.current.brightness = 1.2;
         baseLayerRef.current.contrast = 1.6;
-      }
-    }
-
-    if (topLayer === "BHUVAN") {
-      try {
-        const bhuvanProvider = new Cesium.WebMapServiceImageryProvider({
-          url: "https://bhuvan-vec1.nrsc.gov.in/bhuvan/wms",
-          layers: "cite:bhuvan_watershed",
-          parameters: {
-            transparent: 'true',
-            format: 'image/png'
-          }
-        });
-        viewerRef.current.sentinelLayer = viewer.scene.imageryLayers.addImageryProvider(bhuvanProvider);
-        viewerRef.current.sentinelLayer.alpha = 0.85;
-      } catch (err) {
-        console.error("Bhuvan WMS init error:", err);
+      } else if (topLayer === "BHUVAN") {
+        // ISRO Bhuvan Watershed Cartographic Style: relief contrast + hydrological enhancement
+        baseLayerRef.current.saturation = 1.35;
+        baseLayerRef.current.hue = 0.05;
+        baseLayerRef.current.brightness = 1.08;
+        baseLayerRef.current.contrast = 1.40;
       }
     }
     if (viewer.scene.requestRender) viewer.scene.requestRender();
@@ -529,13 +518,19 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       overlayRef.current = null;
     }
 
-    const provider = new Cesium.UrlTemplateImageryProvider({
-      url: geeTileUrl,
-      maximumLevel: 18
-    });
-
-    overlayRef.current = viewer.scene.imageryLayers.addImageryProvider(provider);
-    overlayRef.current.alpha = overlayVisible ? 0.85 : 0.0;
+    // Only mount XYZ tile overlay if the URL contains proper tile parameters
+    if (geeTileUrl.includes('{z}') || geeTileUrl.includes('{x}')) {
+      try {
+        const provider = new Cesium.UrlTemplateImageryProvider({
+          url: geeTileUrl,
+          maximumLevel: 18
+        });
+        overlayRef.current = viewer.scene.imageryLayers.addImageryProvider(provider);
+        overlayRef.current.alpha = overlayVisible ? 0.85 : 0.0;
+      } catch (err) {
+        console.warn("Could not mount tile overlay:", err);
+      }
+    }
   }, [geeTileUrl, cesiumReady, overlayVisible]);
 
   // Effect to draw grounding boxes from the AI
