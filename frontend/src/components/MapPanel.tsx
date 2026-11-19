@@ -785,6 +785,14 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       const clientX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
       const pct = Math.max(0, Math.min(100, Math.round(((clientX - rect.left) / rect.width) * 100)));
       setSliderPosition(pct);
+      
+      // Instant GPU update without waiting for React re-render cycle
+      if (viewerRef.current?.scene) {
+        const splitFraction = Math.max(0.001, Math.min(0.999, pct / 100));
+        viewerRef.current.scene.splitPosition = splitFraction;
+        if (viewerRef.current.scene.requestRender) viewerRef.current.scene.requestRender();
+      }
+
       if (pct <= 15) setTemporalState("pre");
       else if (pct >= 85) setTemporalState("post");
       else setTemporalState("delta");
@@ -1123,8 +1131,8 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)", fontFamily: "'Space Grotesk', sans-serif", display: "flex", alignItems: "center", gap: 6 }}>
                   Multi-Temporal Change Detector
-                  <span style={{ fontSize: 9.5, padding: "2px 6px", borderRadius: 10, background: "rgba(56, 161, 105, 0.15)", color: "var(--accent-green)", fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>
-                    Output (e)
+                  <span style={{ fontSize: 9.5, padding: "2px 6px", borderRadius: 10, background: "rgba(34, 197, 94, 0.2)", color: "var(--accent-green)", border: "1px solid rgba(34, 197, 94, 0.4)", fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
+                    ⚡ v2.5 Live Split
                   </span>
                 </div>
                 <div style={{ fontSize: 10, color: "var(--text-3)", letterSpacing: "0.2px" }}>
@@ -1208,6 +1216,15 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
               min="0"
               max="100"
               value={sliderPosition}
+              onInput={(e: any) => {
+                const val = Number(e.target.value);
+                setSliderPosition(val);
+                if (viewerRef.current?.scene) {
+                  const splitFraction = Math.max(0.001, Math.min(0.999, val / 100));
+                  viewerRef.current.scene.splitPosition = splitFraction;
+                  if (viewerRef.current.scene.requestRender) viewerRef.current.scene.requestRender();
+                }
+              }}
               onChange={(e) => {
                 const val = Number(e.target.value);
                 setSliderPosition(val);
