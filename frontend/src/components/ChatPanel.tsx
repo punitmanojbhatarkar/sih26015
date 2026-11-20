@@ -2340,9 +2340,59 @@ function MessageBubble({ role, content, data, userQuery }: { role: string; conte
                     ul: ({node, ...props}) => <ul style={{ paddingLeft: 16, marginBottom: 10 }} {...props} />,
                     li: ({node, ...props}) => <li style={{ marginBottom: 4 }} {...props} />,
                   }}>
-                    {content}
+                    {content ? content
+                      .replace(/###?\s*6\.\s*🎯\s*Spatial Grounding[\s\S]*?```json[\s\S]*?```/gi, '')
+                      .replace(/```json[\s\S]*?"grounding_boxes"[\s\S]*?```/gi, '')
+                      .trim() : ""}
                   </ReactMarkdown>
                 </div>
+
+                {/* Spatial Grounding Target Chips */}
+                {data?.grounding_boxes && data.grounding_boxes.length > 0 && (
+                  <div style={{
+                    marginTop: 10,
+                    marginBottom: 10,
+                    padding: "8px 12px",
+                    background: "rgba(15, 23, 42, 0.6)",
+                    border: "1px solid rgba(34, 197, 94, 0.3)",
+                    borderRadius: 8,
+                    backdropFilter: "blur(8px)"
+                  }}>
+                    <div style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: "var(--accent-green)",
+                      marginBottom: 6,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      letterSpacing: "0.5px"
+                    }}>
+                      🎯 DELINEATED SPATIAL GROUNDING TARGETS ({data.grounding_boxes.length})
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {data.grounding_boxes.map((box: any, bIdx: number) => (
+                        <div
+                          key={bIdx}
+                          style={{
+                            fontSize: 9.5,
+                            padding: "3px 8px",
+                            background: "rgba(34, 197, 94, 0.12)",
+                            border: "1px solid rgba(34, 197, 94, 0.35)",
+                            borderRadius: 6,
+                            color: "var(--text-1)",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5
+                          }}
+                        >
+                          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent-green)" }} />
+                          <strong>{box.label || "Target Feature"}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Interactive Inline Graph for Chat UI */}
                 {isAI && data?.module && (
