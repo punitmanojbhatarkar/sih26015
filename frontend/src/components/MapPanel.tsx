@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useEffect, useState, useCallback } from "react";
-import { Layers, ZoomIn, ZoomOut, Pencil, RotateCcw, Eye, Image as ImageIcon, CloudRain, SlidersHorizontal, ShieldCheck, CheckCircle2, AlertTriangle, X, FileCheck, Navigation, Sparkles, ChevronDown, ChevronUp, FileText, Droplets, Sprout, MapPin, BarChart3, TrendingUp, Award } from "lucide-react";
+import { Layers, ZoomIn, ZoomOut, Pencil, RotateCcw, Eye, Image as ImageIcon, CloudRain, SlidersHorizontal, ShieldCheck, CheckCircle2, AlertTriangle, X, FileCheck, Navigation, Sparkles, ChevronDown, ChevronUp, FileText, Droplets, Sprout, MapPin, BarChart3, TrendingUp, Award, Compass } from "lucide-react";
 import { API_BASE } from "../lib/api";
 
 interface MapPanelProps {
@@ -101,6 +101,187 @@ const SAMPLE_FIELD_ASSETS = [
   }
 ];
 
+export interface CatchmentPreset {
+  id: string;
+  name: string;
+  badge: string;
+  lat: number;
+  lon: number;
+  area: number;
+  altitude: number;
+  assets: {
+    id: string;
+    name: string;
+    code: string;
+    type: string;
+    lat: number;
+    lon: number;
+    colorHex: string;
+    storage: string;
+    siltRetention: string;
+    cost: string;
+    status: string;
+    verified: string;
+    desc: string;
+  }[];
+}
+
+const CATCHMENT_PRESETS: CatchmentPreset[] = [
+  {
+    id: "arvari",
+    name: "Arvari Basin (Alwar, RJ)",
+    badge: "Flagship Rejuvenation",
+    lat: 27.2415,
+    lon: 76.3812,
+    area: 2199.4,
+    altitude: 14000.0,
+    assets: [
+      {
+        id: "pmksy_cd_01",
+        name: "🧱 Check Dam CD-01",
+        code: "PMKSY/RJ-ALW/CD-01",
+        type: "Masonry Check Dam",
+        lat: 27.2365,
+        lon: 76.3742,
+        colorHex: "#38bdf8",
+        storage: "18,500 m³",
+        siltRetention: "91.4%",
+        cost: "₹4.85 Lakhs",
+        status: "Fully Functional / Recharging",
+        verified: "Verified by District Geologist (DoLR Inspection ID: DOLR-2026-9812)",
+        desc: "Masonry check dam with gabion apron across main drainage stream. Silt retention: 91.4%. Downstream water table increased by 2.4m BGL."
+      },
+      {
+        id: "pmksy_pt_02",
+        name: "🌊 Johad / Percolation Tank PT-02",
+        code: "PMKSY/RJ-ALW/PT-02",
+        type: "Percolation Tank (Johad)",
+        lat: 27.2485,
+        lon: 76.3862,
+        colorHex: "#22c55e",
+        storage: "42,000 m³",
+        siltRetention: "94.2%",
+        cost: "₹7.40 Lakhs",
+        status: "Perennial Water Spread (4.2 ha)",
+        verified: "Verified by Block Development Officer (WDC 2.0)",
+        desc: "Community Johad water harvesting body. Recharges deep aquifer and drinking water wells for 4 villages across the micro-watershed."
+      },
+      {
+        id: "pmksy_cct_05",
+        name: "🚜 Continuous Contour Trenches (CCT)",
+        code: "PMKSY/RJ-ALW/CCT-05",
+        type: "Ridge Treatment CCT",
+        lat: 27.2555,
+        lon: 76.3712,
+        colorHex: "#f59e0b",
+        storage: "12,200 m³ Infiltration",
+        siltRetention: "98.0%",
+        cost: "₹3.20 Lakhs",
+        status: "14.8 km Ridge Line Completed",
+        verified: "Field Audited via GIS Drone Survey",
+        desc: "Ridge-to-valley continuous contour trenches across upper catchment slopes. Peak runoff velocity arrested by 74%."
+      },
+      {
+        id: "pmksy_agr_12",
+        name: "🌾 Rejuvenated Command Cropland",
+        code: "PMKSY/RJ-ALW/AGR-12",
+        type: "Agro-Ecological Command Zone",
+        lat: 27.2315,
+        lon: 76.3932,
+        colorHex: "#10b981",
+        storage: "142 Hectares Command",
+        siltRetention: "N/A",
+        cost: "₹6.10 Lakhs",
+        status: "Double Cropping Active (NDVI 0.62)",
+        verified: "Sentinel-2 MSI Multi-Spectral Verified",
+        desc: "142 hectares transformed from single rainfed crop to double cropping (Kharif + Rabi) with +0.34 mean NDVI surge."
+      }
+    ]
+  },
+  {
+    id: "bundelkhand",
+    name: "Bundelkhand Catchment (UP/MP)",
+    badge: "Drought Mitigation",
+    lat: 25.4484,
+    lon: 78.5685,
+    area: 1845.0,
+    altitude: 16000.0,
+    assets: [
+      {
+        id: "pmksy_bk_hb03",
+        name: "🧱 Haveli Bunding HB-03",
+        code: "PMKSY/UP-JHS/HB-03",
+        type: "Traditional Haveli Reservoir",
+        lat: 25.4434,
+        lon: 78.5625,
+        colorHex: "#38bdf8",
+        storage: "34,000 m³",
+        siltRetention: "89.0%",
+        cost: "₹5.60 Lakhs",
+        status: "Submergence Storage Active",
+        verified: "SLNA District Inspection Certified",
+        desc: "Haveli cultivation ponding system that holds monsoon runoff on farm fields and releases water for Rabi sowing."
+      },
+      {
+        id: "pmksy_bk_fp07",
+        name: "💧 Community Farm Pond FP-07",
+        code: "PMKSY/UP-JHS/FP-07",
+        type: "Lined Farm Pond",
+        lat: 25.4544,
+        lon: 78.5745,
+        colorHex: "#22c55e",
+        storage: "15,000 m³",
+        siltRetention: "93.5%",
+        cost: "₹3.80 Lakhs",
+        status: "Full Reservoir Level (FRL)",
+        verified: "Verified by Village Watershed Committee",
+        desc: "Community farm pond providing supplemental irrigation for pulses and oilseeds during post-monsoon dry spells."
+      }
+    ]
+  },
+  {
+    id: "narmada",
+    name: "Narmada Sub-Basin (Hoshangabad, MP)",
+    badge: "Soil Conservation",
+    lat: 22.7519,
+    lon: 77.7289,
+    area: 2464.2,
+    altitude: 15000.0,
+    assets: [
+      {
+        id: "pmksy_nar_sd02",
+        name: "🧱 Silt Detention Dam SD-02",
+        code: "PMKSY/MP-HOS/SD-02",
+        type: "Concrete Silt Detention Dam",
+        lat: 22.7469,
+        lon: 77.7229,
+        colorHex: "#38bdf8",
+        storage: "28,000 m³",
+        siltRetention: "96.2%",
+        cost: "₹8.20 Lakhs",
+        status: "Desilting Chamber Operational",
+        verified: "State Remote Sensing Application Centre (MPCOST)",
+        desc: "Heavy masonry silt detention structure safeguarding downstream reservoir from catchment soil wash."
+      },
+      {
+        id: "pmksy_nar_sd05",
+        name: "🌊 Subsurface Dyke SD-05",
+        code: "PMKSY/MP-HOS/SD-05",
+        type: "Subsurface Groundwater Dam",
+        lat: 22.7579,
+        lon: 77.7349,
+        colorHex: "#10b981",
+        storage: "Impermeable Barrier in Alluvium",
+        siltRetention: "100%",
+        cost: "₹9.50 Lakhs",
+        status: "Groundwater Table Raised +3.1m",
+        verified: "Central Ground Water Board (CGWB) Verified",
+        desc: "Underground barrier across the riverbed arresting base flow and raising local aquifer levels for perennial well yield."
+      }
+    ]
+  }
+];
+
 export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, centerLon, module, stats, onDrawComplete, chatOpen }: MapPanelProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<any>(null);
@@ -137,6 +318,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
   const [splitAnalysisMode, setSplitAnalysisMode] = useState<"ndvi" | "moisture" | "bhuvan" | "falsecolor">("ndvi");
   const [dossierExpanded, setDossierExpanded] = useState(false);
   const [activeAssetPopup, setActiveAssetPopup] = useState<any | null>(null);
+  const [selectedCatchmentId, setSelectedCatchmentId] = useState<string>("arvari");
   const splitEntitiesRef = useRef<any[]>([]);
 
   // Ground-Truth Field Photo Inspector Drawer State
@@ -209,6 +391,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
 
     baseLayerRef.current = viewer.scene.imageryLayers.get(0);
     viewerRef.current = viewer;
+    if (typeof window !== "undefined") (window as any).cesiumViewer = viewer;
 
     const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
     handler.setInputAction((movement: any) => {
@@ -229,6 +412,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
     return () => {
       handler.destroy();
       viewer.destroy();
+      if (typeof window !== "undefined") (window as any).cesiumViewer = null;
       viewerRef.current = null;
     };
   }, [cesiumReady]);
@@ -408,6 +592,22 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       // Initial split position - In Cesium, the property is scene.splitPosition
       const splitFraction = Math.max(0.001, Math.min(0.999, sliderPosition / 100));
       viewer.scene.splitPosition = splitFraction;
+
+      // Automatically fly 3D aerial camera into the demonstration catchment if zoomed far out
+      const camHeight = viewer.camera?.positionCartographic?.height || 5000000;
+      if (camHeight > 150000) {
+        const cTarget = CATCHMENT_PRESETS.find(c => c.id === selectedCatchmentId) || CATCHMENT_PRESETS[0];
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(cTarget.lon, cTarget.lat, cTarget.altitude || 14000.0),
+          orientation: {
+            heading: Cesium.Math.toRadians(15.0),
+            pitch: Cesium.Math.toRadians(-38.0),
+            roll: 0.0
+          },
+          duration: 1.8
+        });
+      }
+
       if (viewer.scene.requestRender) viewer.scene.requestRender();
     } else {
       // Clean up split layers when closed
@@ -491,28 +691,77 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
     if (!viewer.postSplitLayer) return;
 
     if (splitAnalysisMode === "ndvi") {
-      viewer.postSplitLayer.saturation = 3.20;
-      viewer.postSplitLayer.hue = 0.24;
-      viewer.postSplitLayer.brightness = 0.96;
-      viewer.postSplitLayer.contrast = 1.60;
+      viewer.postSplitLayer.saturation = 3.40;
+      viewer.postSplitLayer.hue = 0.28;
+      viewer.postSplitLayer.brightness = 0.95;
+      viewer.postSplitLayer.contrast = 1.65;
     } else if (splitAnalysisMode === "moisture") {
-      viewer.postSplitLayer.saturation = 1.80;
-      viewer.postSplitLayer.hue = -0.75;
-      viewer.postSplitLayer.brightness = 0.90;
-      viewer.postSplitLayer.contrast = 1.85;
+      viewer.postSplitLayer.saturation = 2.40;
+      viewer.postSplitLayer.hue = -0.76;
+      viewer.postSplitLayer.brightness = 0.92;
+      viewer.postSplitLayer.contrast = 1.90;
     } else if (splitAnalysisMode === "bhuvan") {
-      viewer.postSplitLayer.saturation = 1.55;
-      viewer.postSplitLayer.hue = 0.06;
-      viewer.postSplitLayer.brightness = 1.08;
-      viewer.postSplitLayer.contrast = 1.50;
+      viewer.postSplitLayer.saturation = 1.50;
+      viewer.postSplitLayer.hue = 0.05;
+      viewer.postSplitLayer.brightness = 1.10;
+      viewer.postSplitLayer.contrast = 1.55;
     } else if (splitAnalysisMode === "falsecolor") {
-      viewer.postSplitLayer.saturation = 2.80;
-      viewer.postSplitLayer.hue = -0.45;
+      viewer.postSplitLayer.saturation = 3.00;
+      viewer.postSplitLayer.hue = -0.42;
       viewer.postSplitLayer.brightness = 1.05;
-      viewer.postSplitLayer.contrast = 1.40;
+      viewer.postSplitLayer.contrast = 1.45;
     }
     if (viewer.scene.requestRender) viewer.scene.requestRender();
   }, [splitAnalysisMode, splitSliderActive]);
+
+  // Fly 3D Camera directly to chosen Demonstration Catchment
+  const flyToCatchment = useCallback((catchmentId: string) => {
+    setSelectedCatchmentId(catchmentId);
+    const target = CATCHMENT_PRESETS.find(c => c.id === catchmentId) || CATCHMENT_PRESETS[0];
+    if (!viewerRef.current?.camera) return;
+    const Cesium = (window as any).Cesium;
+    if (!Cesium) return;
+
+    viewerRef.current.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(target.lon, target.lat, target.altitude || 14000.0),
+      orientation: {
+        heading: Cesium.Math.toRadians(15.0),
+        pitch: Cesium.Math.toRadians(-38.0),
+        roll: 0.0
+      },
+      duration: 1.8
+    });
+  }, []);
+
+  // Zero-latency GPU shader adjustment for remote sensing modes
+  const applyRemoteSensingMode = useCallback((mode: "ndvi" | "moisture" | "bhuvan" | "falsecolor") => {
+    setSplitAnalysisMode(mode);
+    const viewer = viewerRef.current;
+    if (!viewer?.postSplitLayer) return;
+
+    if (mode === "ndvi") {
+      viewer.postSplitLayer.saturation = 3.40;
+      viewer.postSplitLayer.hue = 0.28;
+      viewer.postSplitLayer.brightness = 0.95;
+      viewer.postSplitLayer.contrast = 1.65;
+    } else if (mode === "moisture") {
+      viewer.postSplitLayer.saturation = 2.40;
+      viewer.postSplitLayer.hue = -0.76;
+      viewer.postSplitLayer.brightness = 0.92;
+      viewer.postSplitLayer.contrast = 1.90;
+    } else if (mode === "bhuvan") {
+      viewer.postSplitLayer.saturation = 1.50;
+      viewer.postSplitLayer.hue = 0.05;
+      viewer.postSplitLayer.brightness = 1.10;
+      viewer.postSplitLayer.contrast = 1.55;
+    } else if (mode === "falsecolor") {
+      viewer.postSplitLayer.saturation = 3.00;
+      viewer.postSplitLayer.hue = -0.42;
+      viewer.postSplitLayer.brightness = 1.05;
+      viewer.postSplitLayer.contrast = 1.45;
+    }
+    if (viewer.scene?.requestRender) viewer.scene.requestRender();
+  }, []);
 
   // Effect to place interactive PMKSY-WDC 2.0 Field Assets on the 3D Globe during split
   useEffect(() => {
@@ -529,80 +778,16 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
     splitEntitiesRef.current = [];
 
     if (splitSliderActive) {
-      const cLat = centerLat || 27.2415;
-      const cLon = centerLon || 76.3812;
+      const activeCatchment = CATCHMENT_PRESETS.find(c => c.id === selectedCatchmentId) || CATCHMENT_PRESETS[0];
 
-      const assets = [
-        {
-          id: "pmksy_cd_01",
-          name: "🧱 Check Dam CD-01",
-          code: "PMKSY/RJ-ALW/CD-01",
-          type: "Masonry Check Dam",
-          lat: cLat - 0.005,
-          lon: cLon - 0.007,
-          color: Cesium.Color.fromCssColorString("#38bdf8"),
-          storage: "18,500 m³",
-          siltRetention: "91.4%",
-          cost: "₹4.85 Lakhs",
-          status: "Fully Functional / Recharging",
-          verified: "Verified by District Geologist",
-          desc: "Masonry check dam with gabion apron. Silt retention: 91.4%. Downstream water table increased by 2.4m BGL."
-        },
-        {
-          id: "pmksy_pt_02",
-          name: "🌊 Johad / Percolation Tank PT-02",
-          code: "PMKSY/RJ-ALW/PT-02",
-          type: "Percolation Tank (Johad)",
-          lat: cLat + 0.007,
-          lon: cLon + 0.005,
-          color: Cesium.Color.fromCssColorString("#22c55e"),
-          storage: "42,000 m³",
-          siltRetention: "94.2%",
-          cost: "₹7.40 Lakhs",
-          status: "Perennial Water Spread (4.2 ha)",
-          verified: "Verified by Block Development Officer",
-          desc: "Community Johad water harvesting body. Recharges deep aquifer and drinking water wells for 4 villages."
-        },
-        {
-          id: "pmksy_cct_05",
-          name: "🚜 Continuous Contour Trenches (CCT)",
-          code: "PMKSY/RJ-ALW/CCT-05",
-          type: "Ridge Treatment CCT",
-          lat: cLat + 0.014,
-          lon: cLon - 0.010,
-          color: Cesium.Color.fromCssColorString("#f59e0b"),
-          storage: "12,200 m³ Infiltration",
-          siltRetention: "98.0%",
-          cost: "₹3.20 Lakhs",
-          status: "14.8 km Ridge Line Completed",
-          verified: "Field Audited via GIS Drone",
-          desc: "Ridge-to-valley continuous contour trenches across upper catchment. Runoff velocity arrested by 74%."
-        },
-        {
-          id: "pmksy_agr_12",
-          name: "🌾 Rejuvenated Command Cropland",
-          code: "PMKSY/RJ-ALW/AGR-12",
-          type: "Agro-Ecological Command Zone",
-          lat: cLat - 0.010,
-          lon: cLon + 0.012,
-          color: Cesium.Color.fromCssColorString("#10b981"),
-          storage: "142 Hectares Command",
-          siltRetention: "N/A",
-          cost: "₹6.10 Lakhs",
-          status: "Double Cropping Active (NDVI 0.62)",
-          verified: "Sentinel-2 MSI Biomass Verified",
-          desc: "142 hectares transformed from single rainfed crop to double cropping (Kharif + Rabi) with +0.34 mean NDVI surge."
-        }
-      ];
-
-      assets.forEach(a => {
+      activeCatchment.assets.forEach(a => {
         try {
           const entity = viewer.entities.add({
             name: a.name,
             position: Cesium.Cartesian3.fromDegrees(a.lon, a.lat),
             point: {
               pixelSize: 11,
-              color: a.color,
+              color: Cesium.Color.fromCssColorString(a.colorHex),
               outlineColor: Cesium.Color.WHITE,
               outlineWidth: 2,
               disableDepthTestDistance: Number.POSITIVE_INFINITY
@@ -651,7 +836,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
         (viewer as any)._splitAssetClickHandler = null;
       }
     };
-  }, [splitSliderActive, cesiumReady, centerLat, centerLon]);
+  }, [splitSliderActive, cesiumReady, selectedCatchmentId]);
 
   useEffect(() => {
     if (!viewerRef.current || !cesiumReady) return;
@@ -1372,6 +1557,45 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
             </div>
           </div>
 
+          {/* Quick Watershed Focus Selector */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(0,0,0,0.3)", border: "1px solid var(--border)", borderRadius: 8, padding: "4px 8px", gap: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: "var(--text-3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              <Navigation size={11} color="var(--accent-green)" /> Watershed:
+            </div>
+            <div style={{ display: "flex", gap: 4, flex: 1, overflowX: "auto" }}>
+              {CATCHMENT_PRESETS.map(c => (
+                <button
+                  key={c.id}
+                  onClick={() => flyToCatchment(c.id)}
+                  style={{
+                    padding: "3px 8px", fontSize: 10, fontWeight: selectedCatchmentId === c.id ? 700 : 500,
+                    borderRadius: 5, border: `1px solid ${selectedCatchmentId === c.id ? "rgba(34, 197, 94, 0.45)" : "var(--border)"}`,
+                    background: selectedCatchmentId === c.id ? "rgba(34, 197, 94, 0.22)" : "transparent",
+                    color: selectedCatchmentId === c.id ? "var(--accent-green)" : "var(--text-2)",
+                    cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.15s ease",
+                    display: "flex", alignItems: "center", gap: 4
+                  }}
+                  title={`Fly 3D camera to ${c.name} (${c.badge})`}
+                >
+                  <MapPin size={10} />
+                  {c.name.split(" (")[0]}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => flyToCatchment(selectedCatchmentId)}
+              style={{
+                fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 5,
+                background: "rgba(56, 189, 248, 0.18)", border: "1px solid rgba(56, 189, 248, 0.4)",
+                color: "#38bdf8", cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
+                whiteSpace: "nowrap"
+              }}
+              title="Fly aerial 3D camera to the selected watershed"
+            >
+              <Compass size={11} /> 3D Focus
+            </button>
+          </div>
+
           {/* Remote Sensing Mode Switcher */}
           <div style={{ display: "flex", gap: 5, background: "rgba(0,0,0,0.3)", border: "1px solid var(--border)", borderRadius: 8, padding: 3 }}>
             {[
@@ -1382,7 +1606,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
             ].map(m => (
               <button
                 key={m.id}
-                onClick={() => setSplitAnalysisMode(m.id as any)}
+                onClick={() => applyRemoteSensingMode(m.id as any)}
                 style={{
                   flex: 1, padding: "5px 6px", fontSize: 10, fontWeight: splitAnalysisMode === m.id ? 700 : 500,
                   border: "none", borderRadius: 6, cursor: "pointer",
@@ -1484,36 +1708,42 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
           </div>
 
           {/* Dynamic Live Telemetry KPI Strip */}
-          <div style={{
-            display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6,
-            background: "rgba(0,0,0,0.25)", border: "1px solid var(--border)",
-            borderRadius: 8, padding: "8px 10px"
-          }}>
-            <div>
-              <div style={{ fontSize: 8.5, color: "var(--text-3)", textTransform: "uppercase" }}>Treated Catchment</div>
-              <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--text-1)", fontFamily: "'JetBrains Mono', monospace" }}>
-                {((sliderPosition / 100) * (stats?.change?.total_watershed_area_km2 || 2464.2)).toFixed(1)} km²
+          {(() => {
+            const currentCatchment = CATCHMENT_PRESETS.find(c => c.id === selectedCatchmentId) || CATCHMENT_PRESETS[0];
+            const activeWatershedArea = currentCatchment.area || 2199.4;
+            return (
+              <div style={{
+                display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6,
+                background: "rgba(0,0,0,0.25)", border: "1px solid var(--border)",
+                borderRadius: 8, padding: "8px 10px"
+              }}>
+                <div>
+                  <div style={{ fontSize: 8.5, color: "var(--text-3)", textTransform: "uppercase" }}>Treated Catchment</div>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--text-1)", fontFamily: "'JetBrains Mono', monospace" }}>
+                    {((sliderPosition / 100) * activeWatershedArea).toFixed(1)} km²
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 8.5, color: "var(--text-3)", textTransform: "uppercase" }}>Curtain ΔNDVI</div>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--accent-green)", fontFamily: "'JetBrains Mono', monospace" }}>
+                    +{(0.16 + (sliderPosition / 100) * 0.28).toFixed(2)}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 8.5, color: "var(--text-3)", textTransform: "uppercase" }}>Runoff Captured</div>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: "#38bdf8", fontFamily: "'JetBrains Mono', monospace" }}>
+                    {((sliderPosition / 100) * (activeWatershedArea * 0.0022)).toFixed(2)} MCM
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 8.5, color: "var(--text-3)", textTransform: "uppercase" }}>Water Recharge</div>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: "#f59e0b", fontFamily: "'JetBrains Mono', monospace" }}>
+                    +{Math.round(18 + (sliderPosition / 100) * 32)}%
+                  </div>
+                </div>
               </div>
-            </div>
-            <div>
-              <div style={{ fontSize: 8.5, color: "var(--text-3)", textTransform: "uppercase" }}>Curtain ΔNDVI</div>
-              <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--accent-green)", fontFamily: "'JetBrains Mono', monospace" }}>
-                +{(0.16 + (sliderPosition / 100) * 0.28).toFixed(2)}
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: 8.5, color: "var(--text-3)", textTransform: "uppercase" }}>Runoff Captured</div>
-              <div style={{ fontSize: 11.5, fontWeight: 700, color: "#38bdf8", fontFamily: "'JetBrains Mono', monospace" }}>
-                {((sliderPosition / 100) * 4.82).toFixed(2)} MCM
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: 8.5, color: "var(--text-3)", textTransform: "uppercase" }}>Water Recharge</div>
-              <div style={{ fontSize: 11.5, fontWeight: 700, color: "#f59e0b", fontFamily: "'JetBrains Mono', monospace" }}>
-                +{Math.round(18 + (sliderPosition / 100) * 32)}%
-              </div>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* Expandable PMKSY-WDC 2.0 Officer Evaluation Dossier */}
           {dossierExpanded && (
