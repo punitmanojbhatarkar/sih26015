@@ -880,20 +880,24 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
     if (viewer.scene.requestRender) viewer.scene.requestRender();
   }, [topLayer, cesiumReady, splitSliderActive]);
 
-  // Effect to manage Dual-Epoch Split Comparison in Cesium
+  // Effect to manage Multi-Temporal Difference Overlay & Split Comparison in Cesium
   useEffect(() => {
     if (!viewerRef.current || !cesiumReady) return;
     const Cesium = (window as any).Cesium;
     const viewer = viewerRef.current;
 
     if (splitSliderActive) {
-      // 1. If single sentinelLayer exists, remove it temporarily
-      if (viewer.sentinelLayer) {
-        viewer.scene.imageryLayers.remove(viewer.sentinelLayer);
-        viewer.sentinelLayer = null;
+      // 1. Keep base layer visible and natural across the entire globe
+      if (baseLayerRef.current) {
+        baseLayerRef.current.show = true;
+        baseLayerRef.current.splitDirection = Cesium.SplitDirection.NONE;
+        baseLayerRef.current.saturation = 1.0;
+        baseLayerRef.current.contrast = 1.0;
+        baseLayerRef.current.brightness = 1.0;
+        baseLayerRef.current.hue = 0.0;
       }
 
-      // 2. Remove existing split layers if any
+      // 2. Remove any legacy duplicate split layers
       if (viewer.preSplitLayer) {
         viewer.scene.imageryLayers.remove(viewer.preSplitLayer);
         viewer.preSplitLayer = null;
@@ -907,66 +911,47 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
         viewer.diffOverlayLayer = null;
       }
 
-      // 3. HIDE the base layer — it has splitDirection=NONE so it renders across full viewport
-      if (baseLayerRef.current) {
-        baseLayerRef.current.show = false;
-      }
-
-      // 4. Add Pre-Monsoon Layer (Left: Authentic Natural Raw Baseline Satellite Imagery)
-      const preProvider = new Cesium.UrlTemplateImageryProvider({
-        url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        maximumLevel: 18
-      });
-      const preLayer = viewer.scene.imageryLayers.addImageryProvider(preProvider);
-      preLayer.splitDirection = Cesium.SplitDirection.LEFT;
-      preLayer.saturation = 1.0;   // Clean, natural satellite colors — no artificial grayscale
-      preLayer.hue = 0.0;
-      preLayer.brightness = 1.0;
-      preLayer.contrast = 1.0;
-      preLayer.alpha = 1.0;
-      viewer.preSplitLayer = preLayer;
-
-      // 5. Add Post-Monsoon Base Layer (Right: Clean Authentic Natural Satellite Colors)
-      const postProvider = new Cesium.UrlTemplateImageryProvider({
-        url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        maximumLevel: 18
-      });
-      const postLayer = viewer.scene.imageryLayers.addImageryProvider(postProvider);
-      postLayer.splitDirection = Cesium.SplitDirection.RIGHT;
-      postLayer.saturation = 1.0;  // Clean, natural satellite colors — no neon orange/green
-      postLayer.hue = 0.0;
-      postLayer.brightness = 1.0;
-      postLayer.contrast = 1.0;
-      postLayer.alpha = 1.0;
-      viewer.postSplitLayer = postLayer;
-
-      // 6. Mount Scientific Remote Sensing Difference Overlay (Right: Cesium.SingleTileImageryProvider)
-      const targetCatchment = CATCHMENT_PRESETS.find(c => c.id === selectedCatchmentId) || CATCHMENT_PRESETS[0];
-      const textureDataUrl = generateDifferenceTexture(targetCatchment, splitAnalysisMode);
-      if (textureDataUrl) {
-        const [w, s, e, n] = targetCatchment.bounds;
-        const diffProvider = new Cesium.SingleTileImageryProvider({
-          url: textureDataUrl,
-          rectangle: Cesium.Rectangle.fromDegrees(w, s, e, n)
-        });
-        const diffLayer = viewer.scene.imageryLayers.addImageryProvider(diffProvider);
-        diffLayer.splitDirection = Cesium.SplitDirection.RIGHT;
-        diffLayer.alpha = 0.88;
-        viewer.diffOverlayLayer = diffLayer;
-      }
-
-      // Also split overlay if present
-      if (overlayRef.current) {
-        overlayRef.current.splitDirection = Cesium.SplitDirection.RIGHT;
-      }
-
-      // Initial split position
+      // 3. Set split position in Cesium
       const splitFraction = Math.max(0.001, Math.min(0.999, sliderPosition / 100));
       viewer.scene.splitPosition = splitFraction;
 
-      // Automatically fly 3D aerial camera into the demonstration catchment if zoomed far out
+      // 4. Mount Scientific Remote Sensing Difference Overlay via SingleTileImageryProvider.fromUrl
+      const targetCatchment = CATCHMENT_PRESETS.find(c => c.id === selectedCatchmentId) || CATCHMENT_PRESETS[0];
+      const textureDataUrl = generateDifferenceTexture(targetCatchment, splitAnalysisMode);
+      if (textureDataUrl && Cesium.SingleTileImageryProvider) {
+        const [w, s, e, n] = targetCatchment.bounds;
+        const rect = Cesium.Rectangle.fromDegrees(w, s, e, n);
+
+        const addDiffLayer = (provider: any) => {
+          if (!viewerRef.current || viewerRef.current.isDestroyed?.()) return;
+          if (viewerRef.current.diffOverlayLayer) {
+            viewerRef.current.scene.imageryLayers.remove(viewerRef.current.diffOverlayLayer);
+          }
+          const diffLayer = viewerRef.current.scene.imageryLayers.addImageryProvider(provider);
+          diffLayer.splitDirection = Cesium.SplitDirection.RIGHT;
+          diffLayer.alpha = 0.88;
+          viewerRef.current.diffOverlayLayer = diffLayer;
+          if (viewerRef.current.scene?.requestRender) viewerRef.current.scene.requestRender();
+        };
+
+        if (typeof Cesium.SingleTileImageryProvider.fromUrl === "function") {
+          Cesium.SingleTileImageryProvider.fromUrl(textureDataUrl, { rectangle: rect })
+            .then(addDiffLayer)
+            .catch((err: any) => console.warn("Failed to load difference raster fromUrl", err));
+        } else {
+          try {
+            const provider = new Cesium.SingleTileImageryProvider({ url: textureDataUrl, rectangle: rect });
+            addDiffLayer(provider);
+          } catch (err) {
+            console.warn("Legacy SingleTileImageryProvider failed", err);
+          }
+        }
+      }
+
+      // Automatically fly 3D aerial camera into demonstration catchment if zoomed far out
       const camHeight = viewer.camera?.positionCartographic?.height || 5000000;
       if (camHeight > 150000) {
+        viewer.camera.cancelFlight();
         viewer.camera.flyTo({
           destination: Cesium.Cartesian3.fromDegrees(targetCatchment.lon, targetCatchment.lat, targetCatchment.altitude || 14000.0),
           orientation: {
@@ -978,9 +963,13 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
         });
       }
 
-      if (viewer.scene.requestRender) viewer.scene.requestRender();
+      if (viewer.scene?.requestRender) viewer.scene.requestRender();
     } else {
-      // Clean up split layers when closed
+      // Clean up diff layer when slider closed
+      if (viewer.diffOverlayLayer) {
+        viewer.scene.imageryLayers.remove(viewer.diffOverlayLayer);
+        viewer.diffOverlayLayer = null;
+      }
       if (viewer.preSplitLayer) {
         viewer.scene.imageryLayers.remove(viewer.preSplitLayer);
         viewer.preSplitLayer = null;
@@ -989,22 +978,19 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
         viewer.scene.imageryLayers.remove(viewer.postSplitLayer);
         viewer.postSplitLayer = null;
       }
-      if (viewer.diffOverlayLayer) {
-        viewer.scene.imageryLayers.remove(viewer.diffOverlayLayer);
-        viewer.diffOverlayLayer = null;
-      }
-      if (overlayRef.current) {
-        overlayRef.current.splitDirection = Cesium.SplitDirection.NONE;
-      }
-      // RESTORE the base layer
       if (baseLayerRef.current) {
         baseLayerRef.current.show = true;
+        baseLayerRef.current.splitDirection = Cesium.SplitDirection.NONE;
       }
-      if (viewer.scene.requestRender) viewer.scene.requestRender();
+      if (viewer.scene?.requestRender) viewer.scene.requestRender();
     }
 
     return () => {
       if (viewer && viewer.scene) {
+        if (viewer.diffOverlayLayer) {
+          viewer.scene.imageryLayers.remove(viewer.diffOverlayLayer);
+          viewer.diffOverlayLayer = null;
+        }
         if (viewer.preSplitLayer) {
           viewer.scene.imageryLayers.remove(viewer.preSplitLayer);
           viewer.preSplitLayer = null;
@@ -1013,14 +999,11 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
           viewer.scene.imageryLayers.remove(viewer.postSplitLayer);
           viewer.postSplitLayer = null;
         }
-        if (viewer.diffOverlayLayer) {
-          viewer.scene.imageryLayers.remove(viewer.diffOverlayLayer);
-          viewer.diffOverlayLayer = null;
-        }
         if (baseLayerRef.current) {
           baseLayerRef.current.show = true;
+          baseLayerRef.current.splitDirection = Cesium.SplitDirection.NONE;
         }
-        if (viewer.scene.requestRender) viewer.scene.requestRender();
+        if (viewer.scene?.requestRender) viewer.scene.requestRender();
       }
     };
   }, [splitSliderActive, cesiumReady, selectedCatchmentId, splitAnalysisMode]);
@@ -1034,30 +1017,6 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       const splitFraction = Math.max(0.001, Math.min(0.999, sliderPosition / 100));
       viewer.scene.splitPosition = splitFraction;
 
-      if (viewer.preSplitLayer) {
-        if (sliderPosition >= 100) {
-          viewer.preSplitLayer.show = false;
-        } else if (sliderPosition <= 0) {
-          viewer.preSplitLayer.show = true;
-          viewer.preSplitLayer.splitDirection = Cesium.SplitDirection.NONE;
-        } else {
-          viewer.preSplitLayer.show = true;
-          viewer.preSplitLayer.splitDirection = Cesium.SplitDirection.LEFT;
-        }
-      }
-
-      if (viewer.postSplitLayer) {
-        if (sliderPosition <= 0) {
-          viewer.postSplitLayer.show = false;
-        } else if (sliderPosition >= 100) {
-          viewer.postSplitLayer.show = true;
-          viewer.postSplitLayer.splitDirection = Cesium.SplitDirection.NONE;
-        } else {
-          viewer.postSplitLayer.show = true;
-          viewer.postSplitLayer.splitDirection = Cesium.SplitDirection.RIGHT;
-        }
-      }
-
       if (viewer.diffOverlayLayer) {
         if (sliderPosition <= 0) {
           viewer.diffOverlayLayer.show = false;
@@ -1070,7 +1029,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
         }
       }
 
-      if (viewer.scene.requestRender) viewer.scene.requestRender();
+      if (viewer.scene?.requestRender) viewer.scene.requestRender();
     }
   }, [sliderPosition, splitSliderActive]);
 
@@ -1082,6 +1041,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
     const Cesium = (window as any).Cesium;
     if (!Cesium) return;
 
+    viewerRef.current.camera.cancelFlight();
     viewerRef.current.camera.flyTo({
       destination: Cesium.Cartesian3.fromDegrees(target.lon, target.lat, target.altitude || 14000.0),
       orientation: {
