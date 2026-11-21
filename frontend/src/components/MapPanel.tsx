@@ -1014,6 +1014,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState<boolean>(false);
   const [hudMinimized, setHudMinimized] = useState<boolean>(false);
+  const [showLocationPicker, setShowLocationPicker] = useState<boolean>(false);
   const splitEntitiesRef = useRef<any[]>([]);
 
   // Ground-Truth Field Photo Inspector Drawer State
@@ -1360,6 +1361,7 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
     setActiveCatchment(target);
     setSearchQuery(target.name);
     setShowSearchDropdown(false);
+    setShowLocationPicker(false);
 
     if (!viewerRef.current?.camera) return;
     const Cesium = (window as any).Cesium;
@@ -1372,6 +1374,35 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       duration: 1.8
     });
   }, [activeCatchment]);
+
+  // Launch comparison strictly for a chosen target watershed
+  const startWatershedComparison = useCallback((catchment: CatchmentPreset) => {
+    setShowLocationPicker(false);
+    setSelectedCatchmentId(catchment.id);
+    setActiveCatchment(catchment);
+    setSearchQuery(catchment.name);
+    setShowSearchDropdown(false);
+
+    if (viewerRef.current?.camera) {
+      const Cesium = (window as any).Cesium;
+      if (Cesium) {
+        const [w, s, e, n] = catchment.bounds;
+        viewerRef.current.camera.cancelFlight();
+        viewerRef.current.camera.flyTo({
+          destination: Cesium.Rectangle.fromDegrees(w - 0.015, s - 0.015, e + 0.015, n + 0.015),
+          duration: 1.8,
+          complete: () => {
+            setSplitSliderActive(true);
+            setTemporalState("delta");
+            setSliderPosition(50);
+          }
+        });
+      }
+    }
+    setSplitSliderActive(true);
+    setTemporalState("delta");
+    setSliderPosition(50);
+  }, []);
 
   // Handle Location Search across any Indian Watershed / Village / District
   const handleLocationSearch = async (query: string) => {
@@ -1556,14 +1587,14 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
     }
   }, [showWeather, cesiumReady]);
 
-  // Auto-activate multi-temporal split comparison when Change Detection module is triggered
+  // When Change Detection module is triggered, prompt officer to select target watershed
   useEffect(() => {
     if (module === "change" || stats?.change) {
-      setSplitSliderActive(true);
-      setTemporalState("delta");
-      setSliderPosition(50);
+      if (!splitSliderActive) {
+        setShowLocationPicker(true);
+      }
     }
-  }, [module, stats]);
+  }, [module, stats, splitSliderActive]);
 
   // Effect to fly to the bounding box
   useEffect(() => {
@@ -2113,8 +2144,14 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
       <div style={{ position: "absolute", bottom: 40, left: 12, zIndex: 10, display: "flex", flexDirection: "column", gap: 8 }}>
         <button
           className={`map-tool ${splitSliderActive ? "active" : ""}`}
-          onClick={() => setSplitSliderActive(!splitSliderActive)}
-          title="Multi-Temporal Pre vs Post Monsoon Slider"
+          onClick={() => {
+            if (splitSliderActive) {
+              setSplitSliderActive(false);
+            } else {
+              setShowLocationPicker(true);
+            }
+          }}
+          title="Multi-Temporal Pre vs Post Monsoon Slider (PMKSY-WDC 2.0)"
           style={{ borderRadius: "50%", padding: 10, color: splitSliderActive ? "#38bdf8" : undefined }}
         >
           <SlidersHorizontal size={18} />
@@ -2207,9 +2244,16 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
           fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
           width: 440, maxWidth: (chatOpen && isDesktop) ? "min(440px, calc(100vw - 440px))" : "min(440px, calc(100vw - 32px))"
         }}>
-          <span style={{ display: "flex", alignItems: "center", gap: 5, color: "var(--accent-green)", fontWeight: 700, whiteSpace: "nowrap" }}>
+          <button
+            onClick={() => setShowLocationPicker(true)}
+            style={{
+              background: "transparent", border: "none", cursor: "pointer", padding: 0,
+              display: "flex", alignItems: "center", gap: 5, color: "var(--accent-green)", fontWeight: 700, whiteSpace: "nowrap"
+            }}
+            title="Click to Change Watershed Location"
+          >
             <SlidersHorizontal size={13} /> {activeCatchment.name.split(" (")[0]}
-          </span>
+          </button>
           <span style={{ color: "var(--text-3)" }}>|</span>
           <span style={{ color: "var(--text-1)", whiteSpace: "nowrap" }}>{sliderPosition}% Split</span>
           <span style={{ color: "var(--accent-green)", whiteSpace: "nowrap" }}>+{(0.16 + (sliderPosition / 100) * 0.28).toFixed(2)} ΔNDVI</span>
@@ -2268,6 +2312,19 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <button
+                onClick={() => setShowLocationPicker(true)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 4,
+                  fontSize: 10, fontWeight: 600, padding: "3px 7px", borderRadius: 5,
+                  background: "rgba(56, 189, 248, 0.16)", border: "1px solid rgba(56, 189, 248, 0.4)",
+                  color: "#38bdf8", cursor: "pointer", transition: "all 0.18s ease"
+                }}
+                title="Change Target Watershed Location across India"
+              >
+                <MapPin size={10} />
+                Location
+              </button>
               <button
                 onClick={() => setDossierExpanded(!dossierExpanded)}
                 style={{
@@ -2837,6 +2894,184 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
             </div>
             <div style={{ fontSize: 8.5, color: "var(--text-2)", marginTop: 2 }}>
               Audited by: <strong>{selectedFieldAsset.inspectedBy}</strong> on {selectedFieldAsset.date}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Watershed Target Selection Modal (Location-First Flow) ── */}
+      {showLocationPicker && (
+        <div style={{
+          position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(3, 7, 18, 0.82)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 3500, padding: 16
+        }}>
+          <div className="fade-up" style={{
+            background: "rgba(15, 23, 42, 0.96)",
+            border: "1px solid var(--border-glow)",
+            borderRadius: 16,
+            padding: "20px 24px",
+            maxWidth: 660, width: "100%",
+            boxShadow: "0 24px 60px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.08)",
+            display: "flex", flexDirection: "column", gap: 16,
+            maxHeight: "90vh", overflowY: "auto"
+          }}>
+            {/* Modal Header */}
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", borderBottom: "1px solid var(--border)", paddingBottom: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 8,
+                  background: "rgba(34, 197, 94, 0.16)", border: "1px solid rgba(34, 197, 94, 0.35)",
+                  display: "flex", alignItems: "center", justifyContent: "center"
+                }}>
+                  <SlidersHorizontal size={18} color="var(--accent-green)" />
+                </div>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text-1)", fontFamily: "'Space Grotesk', sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
+                    Select Target Watershed
+                    <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 10, background: "rgba(34, 197, 94, 0.18)", color: "var(--accent-green)", border: "1px solid rgba(34, 197, 94, 0.4)", fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
+                      PMKSY-WDC 2.0
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>
+                    Bi-temporal satellite comparison (Pre vs Post Monsoon) evaluates a specific micro-catchment
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowLocationPicker(false)}
+                style={{
+                  background: "var(--bg-hover)", border: "1px solid var(--border)",
+                  borderRadius: "50%", width: 28, height: 28,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: "var(--text-3)", cursor: "pointer", transition: "all 0.18s ease"
+                }}
+                title="Cancel"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Location Search Input */}
+            <div style={{ position: "relative" }}>
+              <div style={{
+                display: "flex", alignItems: "center", gap: 8,
+                background: "rgba(0, 0, 0, 0.45)", border: "1px solid var(--border-mid)",
+                borderRadius: 8, padding: "8px 12px",
+                boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.4)"
+              }}>
+                <Search size={14} color="var(--accent)" />
+                <input
+                  type="text"
+                  placeholder="Type any Indian watershed, district, taluka, or village (e.g. Ralegan Siddhi, Latur, Arvari)..."
+                  value={searchQuery}
+                  onChange={(e) => handleLocationSearch(e.target.value)}
+                  autoFocus
+                  style={{
+                    flex: 1, background: "transparent", border: "none", outline: "none",
+                    fontSize: 12, color: "var(--text-1)", fontFamily: "'Inter', sans-serif"
+                  }}
+                />
+                {isSearching && <Loader2 size={13} className="animate-spin" color="var(--accent)" />}
+                {searchQuery && (
+                  <button
+                    onClick={() => { setSearchQuery(""); setSearchResults([]); }}
+                    style={{ background: "transparent", border: "none", color: "var(--text-3)", cursor: "pointer", padding: 0 }}
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              {/* Autocomplete Dropdown if results exist */}
+              {searchResults.length > 0 && (
+                <div style={{
+                  position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4,
+                  background: "rgba(15, 23, 42, 0.98)", border: "1px solid var(--border-glow)",
+                  borderRadius: 8, padding: 6, zIndex: 70, maxHeight: 180, overflowY: "auto",
+                  boxShadow: "0 12px 30px rgba(0,0,0,0.85)", backdropFilter: "blur(20px)"
+                }}>
+                  <div style={{ fontSize: 9.5, color: "var(--text-3)", padding: "3px 8px", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>
+                    Matching Locations ({searchResults.length})
+                  </div>
+                  {searchResults.map((res) => (
+                    <button
+                      type="button"
+                      key={res.id}
+                      className="search-result-item"
+                      onClick={() => startWatershedComparison(res)}
+                      style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between",
+                        width: "100%", border: "none",
+                        padding: "7px 10px", borderRadius: 6, cursor: "pointer",
+                        background: "transparent", color: "var(--text-1)",
+                        fontSize: 11.5, textAlign: "left", transition: "background 0.15s ease"
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(34, 197, 94, 0.15)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                        <MapPin size={12} color="var(--accent-green)" />
+                        <span style={{ fontWeight: 600 }}>{res.name}</span>
+                      </div>
+                      <span style={{ fontSize: 9.5, padding: "2px 6px", borderRadius: 4, background: "rgba(255,255,255,0.06)", color: "var(--text-3)" }}>
+                        {res.badge || "Watershed"} · Launch ➔
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Curated Flagship Demonstration Watersheds */}
+            <div>
+              <div style={{ fontSize: 10.5, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 700, marginBottom: 8 }}>
+                Or Select a National Model Demonstration Catchment:
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 8 }}>
+                {CATCHMENT_PRESETS.map((preset) => (
+                  <button
+                    type="button"
+                    key={preset.id}
+                    className="watershed-modal-preset-card"
+                    data-id={preset.id}
+                    onClick={() => startWatershedComparison(preset)}
+                    style={{
+                      background: "rgba(0, 0, 0, 0.35)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 10, padding: "10px 12px",
+                      textAlign: "left", cursor: "pointer",
+                      display: "flex", flexDirection: "column", gap: 4,
+                      transition: "all 0.2s ease"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "var(--accent-green)";
+                      e.currentTarget.style.background = "rgba(34, 197, 94, 0.08)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "var(--border)";
+                      e.currentTarget.style.background = "rgba(0, 0, 0, 0.35)";
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-1)", display: "flex", alignItems: "center", gap: 5 }}>
+                        <MapPin size={11} color="var(--accent-green)" />
+                        {preset.name.split(" (")[0]}
+                      </span>
+                      <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 4, background: "rgba(34, 197, 94, 0.15)", color: "var(--accent-green)", fontWeight: 600 }}>
+                        {preset.badge}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 10, color: "var(--text-3)", fontFamily: "'JetBrains Mono', monospace" }}>
+                      {preset.name.includes("(") ? preset.name.split("(")[1].replace(")", "") : "India"} · {preset.area} km²
+                    </div>
+                    <div style={{ fontSize: 9.5, color: "#38bdf8", marginTop: 2, display: "flex", alignItems: "center", gap: 3 }}>
+                      <span>Fly to micro-catchment &amp; start comparison ➔</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
