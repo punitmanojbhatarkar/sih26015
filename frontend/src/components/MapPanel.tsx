@@ -948,17 +948,13 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
         }
       }
 
-      // Automatically fly 3D aerial camera into demonstration catchment if zoomed far out
+      // Automatically fly into target catchment bounding rectangle if zoomed far out
       const camHeight = viewer.camera?.positionCartographic?.height || 5000000;
-      if (camHeight > 150000) {
+      if (camHeight > 100000) {
         viewer.camera.cancelFlight();
+        const [w, s, e, n] = targetCatchment.bounds;
         viewer.camera.flyTo({
-          destination: Cesium.Cartesian3.fromDegrees(targetCatchment.lon, targetCatchment.lat, targetCatchment.altitude || 14000.0),
-          orientation: {
-            heading: Cesium.Math.toRadians(15.0),
-            pitch: Cesium.Math.toRadians(-38.0),
-            roll: 0.0
-          },
+          destination: Cesium.Rectangle.fromDegrees(w - 0.02, s - 0.02, e + 0.02, n + 0.02),
           duration: 1.8
         });
       }
@@ -1041,14 +1037,10 @@ export default function MapPanel({ imageUrl, geeTileUrl, bbox, centerLat, center
     const Cesium = (window as any).Cesium;
     if (!Cesium) return;
 
+    const [w, s, e, n] = target.bounds;
     viewerRef.current.camera.cancelFlight();
     viewerRef.current.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(target.lon, target.lat, target.altitude || 14000.0),
-      orientation: {
-        heading: Cesium.Math.toRadians(15.0),
-        pitch: Cesium.Math.toRadians(-38.0),
-        roll: 0.0
-      },
+      destination: Cesium.Rectangle.fromDegrees(w - 0.02, s - 0.02, e + 0.02, n + 0.02),
       duration: 1.8
     });
   }, []);
